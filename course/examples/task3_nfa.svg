@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1190" height="610" viewBox="0 0 1190 610" role="img" aria-labelledby="title desc">
+  <title id="title">Task 3: regular expression to a nondeterministic finite automaton</title>
+  <desc id="desc">An NFA for (a|b)*a(aa|bb)b. Initial state q0 loops on a and b and also goes to q1 on a. q1 goes to q2 on a or q3 on b. q2 goes to q4 on a, and q3 goes to q4 on b. q4 goes to accepting state qF on b. Missing transitions have an empty destination set.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto">
+      <path d="M 0 1 L 9 5 L 0 9" fill="none" stroke="#182129" stroke-width="1.3"/>
+    </marker>
+    <style>
+      text { font-family: Arial, Helvetica, sans-serif; text-anchor: middle; fill: #182129; }
+      .edge path, .start { fill: none; stroke: #182129; stroke-width: 2.6; marker-end: url(#arrow); }
+      .edge text { font-size: 27px; }
+      .state { fill: white; stroke: #182129; stroke-width: 3; }
+      .name { font-size: 29px; }
+    </style>
+  </defs>
+  <rect width="1190" height="610" fill="white"/>
+  <text x="595" y="40" font-size="28">Task 3 - Regular Expression to NFA</text>
+  <text x="595" y="77" font-size="26">(a|b)*a(aa|bb)b</text>
+
+  <circle class="state" data-state="q0" data-initial="true" cx="135" cy="310" r="50"/>
+  <circle class="state" data-state="q1" cx="375" cy="310" r="50"/>
+  <circle class="state" data-state="q2" cx="615" cy="170" r="50"/>
+  <circle class="state" data-state="q3" cx="615" cy="450" r="50"/>
+  <circle class="state" data-state="q4" cx="850" cy="310" r="50"/>
+  <circle class="state" data-state="qF" data-accepting="true" cx="1080" cy="310" r="50"/>
+  <circle class="state" cx="1080" cy="310" r="41"/>
+  <path class="start" d="M 20 310 L 83 310"/>
+  <text x="49" y="291" font-size="19">start</text>
+
+  <g class="edge" data-from="q0" data-to="q0" data-symbols="a,b">
+    <path d="M 106 268 C 35 138 235 138 164 268"/>
+    <text x="135" y="158">a, b</text>
+  </g>
+  <g class="edge" data-from="q0" data-to="q1" data-symbols="a">
+    <path d="M 187 310 L 323 310"/>
+    <text x="255" y="291">a</text>
+  </g>
+  <g class="edge" data-from="q1" data-to="q2" data-symbols="a">
+    <path d="M 419 284 L 570 196"/>
+    <text x="486" y="225">a</text>
+  </g>
+  <g class="edge" data-from="q2" data-to="q4" data-symbols="a">
+    <path d="M 659 196 L 805 284"/>
+    <text x="739" y="225">a</text>
+  </g>
+  <g class="edge" data-from="q1" data-to="q3" data-symbols="b">
+    <path d="M 419 336 L 570 424"/>
+    <text x="486" y="411">b</text>
+  </g>
+  <g class="edge" data-from="q3" data-to="q4" data-symbols="b">
+    <path d="M 659 424 L 805 336"/>
+    <text x="739" y="411">b</text>
+  </g>
+  <g class="edge" data-from="q4" data-to="qF" data-symbols="b">
+    <path d="M 902 310 L 1028 310"/>
+    <text x="965" y="291">b</text>
+  </g>
+
+  <text class="name" x="135" y="320">q0</text>
+  <text class="name" x="375" y="320">q1</text>
+  <text class="name" x="615" y="180">q2</text>
+  <text class="name" x="615" y="460">q3</text>
+  <text class="name" x="850" y="320">q4</text>
+  <text class="name" x="1080" y="320">qF</text>
+  <text x="135" y="404" font-size="20">Any prefix</text>
+  <text x="1080" y="404" font-size="20">Accepting</text>
+  <text x="595" y="550" font-size="20">Accept if at least one path ends in qF after the entire input is consumed.</text>
+  <text x="595" y="582" font-size="19">q0 has two transitions on a. Unshown transitions have no destination.</text>
+</svg>

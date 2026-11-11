@@ -1,0 +1,26 @@
+// Examples transcribed from Assignment 2a with punctuation corrected.
+// Expected outputs once semantic analysis and runtime are implemented: 23, 6, 21.
+let x: int = 15;
+let y: int = 4;
+let res: int;
+x + y * 2 -> res;
+print(res);
+
+let a: int = 54;
+let b: int = 24;
+let temp: int;
+while (b != 0) {
+    a - (a / b) * b -> temp;
+    b -> a;
+    temp -> b;
+}
+print(a);
+
+fn Fibonacci(n: int) -> int {
+    if (n <= 1) { return n; }
+    return Fibonacci(n - 1) + Fibonacci(n - 2);
+}
+let input: int = 8;
+let ans: int;
+Fibonacci(input) -> ans;
+print(ans);
