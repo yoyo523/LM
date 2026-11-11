@@ -1,0 +1,9 @@
+// Scope, control-flow and Boolean example. Expected output: 15, true.
+let sum: int = 0;
+let i: int = 1;
+while (i <= 5) {
+    sum + i -> sum;
+    i + 1 -> i;
+}
+print(sum);
+print(sum == 15 and true);

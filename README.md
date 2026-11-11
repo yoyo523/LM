@@ -1,35 +1,137 @@
-# LM Course Foundation
+# Klean Compiler and Virtual Machine
 
-This repository is a learning and engineering workspace for the University of
-Adelaide course `2650_COMP_2001_2`, **Language Models, Translation and
-Execution** (2026 Semester 2).
+Klean is a statically typed teaching language with `int` and `bool` values,
+explicit braces, recursive functions, and left-to-right pipeline assignment.
+The implementation follows the Assignment 2a design:
 
-The course develops from formal languages and automata into the construction of
-a compiler or interpreter for a student-designed programming language. The
-repository should follow that same progression: specify the language, recognise
-tokens, parse syntax, represent meaning, execute or generate code, and verify
-the result with documented tests.
+`source -> lexer -> parser/AST -> semantic analysis -> bytecode -> virtual machine`
 
-## Course Links
+The project uses only the Python standard library and supports Python 3.10 or
+newer.
 
-- [Canvas course](https://learn.adelaide.edu.au/courses/30869)
-- [Course roadmap](https://learn.adelaide.edu.au/courses/30869/pages/course-roadmap?module_item_id=1061240)
-- [Assignment 2a](https://learn.adelaide.edu.au/courses/30869/assignments/88731)
-- [Assignment 2b](https://learn.adelaide.edu.au/courses/30869/assignments/88734)
+## Quick start
 
-## Project Notes
+From the project directory, run:
 
-- `course/lmte_course_foundation.md`: verified course structure and the concepts
-  that should shape this project.
-- `course/learning_notes.md`: course terminology and the compiler pipeline
-  distilled from the Canvas learning materials.
-- `course/assignment_workflow.md`: an academically compliant workflow for
-  learning, implementation, testing, and documentation.
+```bash
+python3 -m klean examples/report_examples.kln
+```
 
-## Academic Integrity
+Expected output:
 
-Canvas states that generative AI may edit language for clarity and provide
-language or grammar feedback for Assignments 2a and 2b, but must not generate
-new ideas, answers, or assignment content. Work in this repository must remain
-student-authored. AI support is limited to explanation, self-study, review,
-debugging guidance, and permitted editing unless the course rules change.
+```text
+23
+6
+21
+```
+
+Useful inspection options:
+
+```bash
+python3 -m klean examples/report_examples.kln --tokens --no-run
+python3 -m klean examples/report_examples.kln --ast --no-run
+python3 -m klean examples/report_examples.kln --bytecode --no-run
+```
+
+Compilation errors are printed as `file:line:column: message`. Runtime errors
+use exit status 2; compilation errors use exit status 1.
+
+## Run the tests
+
+```bash
+python3 -m unittest discover -s tests -v
+```
+
+The suite covers lexical positions and errors, parser recovery, precedence,
+static type rules, scopes, function calls, recursion, short-circuit logic,
+32-bit arithmetic, code generation, and end-to-end execution.
+
+## Language reference
+
+### Types and variables
+
+Klean has signed 32-bit `int` values and `bool` values. Variables require an
+explicit type. A variable declared without an initializer must be assigned
+before it is read.
+
+```klean
+let counter: int = 0;
+let ready: bool;
+counter + 1 -> counter;
+true -> ready;
+```
+
+An inner block may shadow a variable from an outer block. Duplicate names in
+the same scope are rejected.
+
+### Control flow
+
+Conditions must have type `bool`, and all blocks use braces.
+
+```klean
+if (counter > 10) {
+    print(counter);
+} else {
+    print(0);
+}
+
+while (counter > 0) {
+    counter - 1 -> counter;
+}
+```
+
+### Functions
+
+Functions are top-level, first-order declarations with typed parameters and a
+typed return value. Calls may be recursive.
+
+```klean
+fn Fibonacci(n: int) -> int {
+    if (n <= 1) { return n; }
+    return Fibonacci(n - 1) + Fibonacci(n - 2);
+}
+
+print(Fibonacci(8));
+```
+
+### Operators
+
+From highest to lowest precedence:
+
+1. Parentheses and calls
+2. Unary `-` and `not`
+3. `*` and `/`
+4. `+` and `-`
+5. `<`, `<=`, `>`, `>=`
+6. `==`, `!=`
+7. `and`
+8. `or`
+
+`and` and `or` use short-circuit evaluation. Division truncates towards zero.
+Arithmetic outside the signed 32-bit range causes a runtime error.
+
+## Project structure
+
+- `klean/lexer_adapter.py`: token recognition and source positions
+- `klean/parser.py`: LL(1) recursive-descent parser with panic recovery
+- `klean/ast.py`: tokens, diagnostics, and generic AST nodes
+- `klean/semantic.py`: scoped symbol tables and static type checking
+- `klean/codegen.py`: AST-to-stack-bytecode translation
+- `klean/bytecode.py`: bytecode program representation and formatter
+- `klean/vm.py`: checked 32-bit stack virtual machine
+- `klean/compiler.py`: complete compiler pipeline API
+- `klean/__main__.py`: command-line interface
+- `examples/`: runnable Klean programs
+- `tests/`: unit and integration tests
+
+## Implementation notes
+
+The compiler collects lexical and syntax diagnostics before semantic analysis.
+Code generation only starts after the source passes all checks. The VM uses a
+stack for expression values and a separate activation frame for every function
+call. Each frame holds nested lexical scopes; functions may also read top-level
+variables that are declared before the function. Bytecode jumps implement
+`if`, `while`, and short-circuit Boolean operators.
+
+The lexer continues after illegal characters. The parser recovers at semicolons,
+closing braces, and statement starts so a single run can report multiple errors.
