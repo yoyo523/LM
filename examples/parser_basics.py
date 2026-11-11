@@ -1,6 +1,6 @@
-"""学习演示：观察现有 Parser 的 token 操作，不新增语言规则。
+"""Learning demo: observe token operations in the existing Parser.
 
-在项目根目录运行：python3 -m examples.parser_basics
+Run from the project root: python3 -m examples.parser_basics
 """
 from klean import Parser
 from klean.lexer_adapter import tokenize
@@ -11,34 +11,34 @@ def show(parser, label):
     token = parser.current
     print(f'{label}: position={parser.position}, '
           f'kind={token.kind!r}, text={token.text!r}, '
-          f'位置={token.line}:{token.column}')
+          f'location={token.line}:{token.column}')
 
 
 def main():
     tokens, errors = tokenize('print(23);')
     assert not errors
     parser = Parser(tokens)
-    print('一、查看、消费、检查并消费')
-    show(parser, '初始状态')
-    print('查看 current：', parser.current)
-    show(parser, '查看后（位置不变）')
-    print('take 返回：', parser.take())
-    show(parser, '消费 print 后')
-    print("expect('(') 返回：", parser.expect('('))
-    show(parser, '匹配左括号后')
+    print('1. Inspect, consume, and check then consume')
+    show(parser, 'Initial state')
+    print('Read current:', parser.current)
+    show(parser, 'After inspection (position unchanged)')
+    print('take returns:', parser.take())
+    show(parser, 'After consuming print')
+    print("expect('(') returns:", parser.expect('('))
+    show(parser, 'After matching the opening parenthesis')
 
-    print('\n二、匹配失败时的位置与错误')
+    print('\n2. Location and diagnostic on a failed match')
     try:
-        parser.expect(')')  # 当前是数字 23，故意要求右括号。
+        parser.expect(')')  # Deliberate mismatch: the current token is 23.
     except ParseError:
         error = parser.diagnostics[-1]
         print(f'{error.line}:{error.column}: {error.message}')
-    show(parser, '匹配失败后（位置不变）')
+    show(parser, 'After the failed match (position unchanged)')
 
-    print('\n三、从头解析同一串 tokens，得到 AST')
-    result = Parser(tokens).parse()  # 新实例从 position=0 开始。
+    print('\n3. Parse the same tokens from the beginning to build an AST')
+    result = Parser(tokens).parse()  # A new instance starts at position=0.
     print(result.program)
-    print('语法错误：', result.diagnostics)
+    print('Syntax diagnostics:', result.diagnostics)
 
 
 if __name__ == '__main__':
