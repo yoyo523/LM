@@ -1,5 +1,25 @@
 # Validation record
 
+## Parser/AST follow-up (2026-11-12)
+
+After the runtime-limits update, 12 Parser contract/integration tests were added.
+The full suite now has **58 tests**, all passing on macOS with Python 3.9.6 and
+the Linux `python:3.10-slim` container with Python 3.10.22. The Linux report
+example still prints exactly `23`, `6`, `21`.
+
+The added checks cover identifier-token preservation and exact semantic error
+locations, JSON serialization, lexer token compatibility, nested-block recovery,
+consecutive syntax errors, EOF boundaries, direct Parser recursion handling,
+valid nested blocks and combined call/scope/return execution. See
+[the Parser checklist](parser_contract.md) for the two external confirmations
+still required: a replacement lexer (if any) and the final approved grammar.
+
+The measurements and 46-test results below are the earlier runtime-limits
+baseline, retained as historical evidence; performance was not remeasured for
+this Parser follow-up.
+
+## Runtime-limits baseline
+
 Recorded on 2026-11-12 for the runtime-limits and validation update based on
 commit `2c88e95`. All commands run from the repository root.
 

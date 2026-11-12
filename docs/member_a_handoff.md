@@ -37,10 +37,10 @@ on `kind`. JSON serialization uses `dataclasses.asdict`.
 | --- | --- |
 | Program | items |
 | Block | statements |
-| Function | name, parameters, return_type, body |
+| Function | name, name_token, parameters, return_type, body |
 | Parameter | name, type |
-| VarDecl | name, type, initializer (node or None) |
-| Assign | value, target (identifier string) |
+| VarDecl | name, name_token, type, initializer (node or None) |
+| Assign | value, target (identifier string), target_token |
 | If | condition, then, otherwise (block or None) |
 | While | condition, body |
 | Return, Print | value |
@@ -53,7 +53,7 @@ on `kind`. JSON serialization uses `dataclasses.asdict`.
 
 Never pass a partial AST to semantic analysis or execution if either lexer or
 parser diagnostics are nonempty. Invalid statements are omitted during recovery.
-Recovery uses semicolons, closing braces and recognizable statement starts;
+Recovery tracks nested braces and uses semicolons, closing braces and recognizable statement starts;
 it is best-effort and can produce cascading errors after malformed blocks.
 
 ## Grammar fidelity
@@ -88,3 +88,8 @@ Excessive nesting is reported by the compiler pipeline as a diagnostic.
 VM instruction and function-depth budgets bound execution. These are teaching
 limits, not a security sandbox or a comprehensive memory limit.
 See validation.md for platform evidence and remaining limitations.
+
+See [Parser contract and grammar review](parser_contract.md) for the lexer
+interface, exact identifier locations, current grammar and Member A checklist.
+Member A's algorithm work concerns expression parsing, AST construction and
+traversal, and syntax recovery; it does not concern thread management.

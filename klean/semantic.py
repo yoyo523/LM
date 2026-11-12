@@ -28,8 +28,9 @@ class SemanticAnalyzer:
         self.current_return_type: str | None = None
 
     def error(self, node: Node, message: str) -> None:
+        token = node.fields.get("target_token", node.fields.get("name_token", node.token))
         self.diagnostics.append(
-            Diagnostic(node.token.line, node.token.column, message)
+            Diagnostic(token.line, token.column, message)
         )
 
     def analyse(self, program: Node) -> list[Diagnostic]:

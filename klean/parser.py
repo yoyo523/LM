@@ -33,8 +33,11 @@ class Parser:
 
     def expect(self, kind: str) -> Token:
         if self.current.kind != kind:
-            self.fail(f'Expected {kind!r}, found {self.current.text!r}')
+            self.fail(f'Expected {kind!r}, found {self.describe_current()}')
         return self.take()
+
+    def describe_current(self) -> str:
+        return 'end of input' if self.current.kind == 'EOF' else repr(self.current.text)
 
     def fail(self, message: str):
         t = self.current
@@ -46,7 +49,17 @@ class Parser:
 
     def parse(self) -> ParseResult:
         start = self.current
-        return ParseResult(self.node('Program', start, items=self.items(False)), self.diagnostics)
+        try:
+            items = self.items(False)
+        except RecursionError:
+            token = self.current
+            self.diagnostics.append(Diagnostic(
+                token.line, token.column,
+                'Program nesting exceeds the compiler recursion limit'))
+            # Do not expose a partially constructed tree after stack exhaustion.
+            items = []
+            self.position = len(self.tokens) - 1
+        return ParseResult(self.node('Program', start, items=items), self.diagnostics)
 
     def items(self, in_block: bool) -> list[Node]:
         result = []
@@ -64,16 +77,32 @@ class Parser:
         return result
 
     def synchronize(self, start: int, in_block: bool):
-        # Leave a containing block's closing brace for block(), but always
-        # consume an unmatched top-level brace to guarantee progress.
+        # Reconstruct brace depth already consumed by the failed statement.
+        # A rejected nested function's body must not close its containing block.
+        depth = 0
+        for token in self.tokens[start:self.position]:
+            if token.kind == '{':
+                depth += 1
+            elif token.kind == '}':
+                depth = max(0, depth - 1)
         while self.current.kind != 'EOF':
+            if self.current.kind == '{':
+                depth += 1
+                self.take()
+                continue
             if self.current.kind == '}':
+                if depth:
+                    depth -= 1
+                    self.take()
+                    if depth == 0:
+                        return
+                    continue
                 if not in_block:
                     self.take()
                 return
-            if self.accept(';'):
+            if depth == 0 and self.accept(';'):
                 return
-            if self.position > start and self.current.kind in {'let', 'if', 'while', 'return', 'print', 'fn'}:
+            if depth == 0 and self.position > start and self.current.kind in {'let', 'if', 'while', 'return', 'print', 'fn'}:
                 return
             self.take()
 
@@ -90,7 +119,7 @@ class Parser:
 
     def function(self) -> Node:
         token = self.expect('fn')
-        name = self.expect('ID').text
+        name = self.expect('ID')
         self.expect('(')
         params = []
         if self.current.kind != ')':
@@ -103,18 +132,19 @@ class Parser:
         self.expect(')')
         self.expect('->')
         return_type = self.type_name()
-        return self.node('Function', token, name=name, parameters=params,
+        return self.node('Function', token, name=name.text, name_token=name, parameters=params,
                          return_type=return_type, body=self.block())
 
     def statement(self) -> Node:
         token = self.current
         if self.accept('let'):
-            name = self.expect('ID').text
+            name = self.expect('ID')
             self.expect(':')
             type_name = self.type_name()
             value = self.expression() if self.accept('=') else None
             self.expect(';')
-            return self.node('VarDecl', token, name=name, type=type_name, initializer=value)
+            return self.node('VarDecl', token, name=name.text, name_token=name,
+                             type=type_name, initializer=value)
         if self.current.kind in {'if', 'while'}:
             keyword = self.take().kind
             self.expect('(')
@@ -139,7 +169,7 @@ class Parser:
         self.expect('->')
         target = self.expect('ID')
         self.expect(';')
-        return self.node('Assign', token, value=value, target=target.text)
+        return self.node('Assign', token, value=value, target=target.text, target_token=target)
 
     # Lowest to highest precedence. Only the relational level permits at
     # most one operator, exactly as specified in the report.
@@ -184,4 +214,4 @@ class Parser:
             expression = self.expression()
             self.expect(')')
             return expression
-        self.fail(f'Expected expression, found {token.text!r}')
+        self.fail(f'Expected expression, found {self.describe_current()}')
