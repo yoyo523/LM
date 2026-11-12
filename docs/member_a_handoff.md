@@ -1,6 +1,8 @@
 # Member A: Klean syntax front end
 
-This AI-assisted implementation follows the supplied Assignment 2a grammar.
+This AI-assisted implementation reflects the Assignment 2a design. The formal
+EBNF in the local `Assignment 2a.pdf`, pages 3–4, was reviewed on 2026-11-13;
+see frontend_review.md for scope and remaining ambiguities.
 It is not evidence of independently authored student work.
 The repository records course restrictions on AI-generated assignment
 content; check permitted use before including this implementation in assessed work.
@@ -58,13 +60,14 @@ it is best-effort and can produce cascading errors after malformed blocks.
 
 ## Grammar fidelity
 
-Core productions follow Assignment 2a pages 3–4. Keywords are case sensitive.
+Core productions were checked against Assignment 2a pages 3–4. The matching
+implemented rules are documented in parser_contract.md. Keywords are case sensitive.
 Functions occur only at top level. Braces are mandatory for control flow.
 Assignments end in `-> ID ;`; arbitrary expression statements are not allowed.
 Operator precedence from low to high: or, and, equality, relational, additive,
 multiplicative, unary, primary. Repeated binary operators associate left.
 Relational comparisons cannot chain; equality operators can chain syntactically,
-as in the report. Grouping overrides precedence. Function arguments are expressions.
+under the current implementation. Grouping overrides precedence. Function arguments are expressions.
 
 Corrections to examples: `If` becomes `if`, `While` becomes `while`, the colon
 after `print(counter)` becomes a semicolon, and the typographic dash becomes `-`.
@@ -93,3 +96,5 @@ See [Parser contract and grammar review](parser_contract.md) for the lexer
 interface, exact identifier locations, current grammar and Member A checklist.
 Member A's algorithm work concerns expression parsing, AST construction and
 traversal, and syntax recovery; it does not concern thread management.
+The [2026-11-13 code-review record](frontend_review.md) documents formal EBNF
+verification, frontend-only tests and downstream integration risks.

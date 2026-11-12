@@ -13,6 +13,12 @@ class Token:
 
 @dataclass
 class Node:
+    """AST record; fields are specified in docs/parser_contract.md.
+
+    The anchor token locates the construct. Function/VarDecl additionally carry
+    name_token, and Assign carries target_token, for precise name diagnostics.
+    Consumers must reject trees accompanied by lexer or parser diagnostics.
+    """
     kind: str
     token: Token
     fields: dict[str, Any] = field(default_factory=dict)
@@ -27,5 +33,6 @@ class Diagnostic:
 
 @dataclass
 class ParseResult:
+    """Program plus diagnostics; an erroneous Program is for inspection only."""
     program: Node
     diagnostics: list[Diagnostic]

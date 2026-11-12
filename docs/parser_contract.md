@@ -61,8 +61,10 @@ later recursive AST passes. Never execute a result containing any diagnostics.
 
 ## Implemented grammar reviewed against the current code
 
-This is a description of the implemented grammar, not a newly approved language
-design or proof of compliance with the final assignment specification.
+This description was checked against the formal EBNF in the local
+`Assignment 2a.pdf`, pages 3–4, on 2026-11-13. The productions match that design;
+this does not establish compliance with a later rubric or revised specification.
+See frontend_review.md for the source and review findings.
 Braces below denote repetition only when outside quoted terminals; brackets
 denote optional syntax.
 
@@ -107,7 +109,7 @@ mandatory for `if`, `else` and `while`.
 | Parser boundary tests | Nested blocks, excessive nesting, complex calls, consecutive errors, malformed function headers and EOF cases |
 | Semantic integration | Identifier diagnostics, call argument types, name resolution and compilation gating |
 | VM integration | One combined test verifies recursive calls, nested scopes, shadowing, early return and outer-variable preservation |
-| Grammar review | Implementation reviewed and documented above; final group grammar/rubric still needed for conformance sign-off |
+| Grammar review | Checked against Assignment 2a PDF pages 3–4; later revisions/rubric remain outside this review |
 | Algorithm responsibility | Expression parsing, AST traversal and syntax recovery, as defined above |
 
 The existing tests also verify precedence, associativity, error recovery,

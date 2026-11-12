@@ -1,5 +1,14 @@
 # Validation record
 
+## Frontend code-review follow-up (2026-11-13)
+
+The suite now contains **65 tests**, all passing locally on macOS/Python 3.9.6.
+The report example still outputs `23`, `6`, `21`. Seven new tests exercise the
+frontend without semantic/VM imports. The formal Assignment 2a EBNF was located
+in Downloads and reviewed against the implementation, resolving the missing-
+source limitation recorded below. See [frontend review](frontend_review.md).
+Earlier counts and Linux/performance measurements below are historical results.
+
 ## Parser/AST follow-up (2026-11-12)
 
 After the runtime-limits update, 12 Parser contract/integration tests were added.
