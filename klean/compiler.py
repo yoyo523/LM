@@ -21,12 +21,20 @@ class CompilationResult:
 
 def compile_source(source: str) -> CompilationResult:
     tokens, diagnostics = tokenize(source)
-    parsed = Parser(tokens).parse()
-    diagnostics.extend(parsed.diagnostics)
+    parser = Parser(tokens)
+    program = Node("Program", tokens[0], {"items": []})
     bytecode = None
-    if not diagnostics:
-        diagnostics.extend(analyse(parsed.program))
-    if not diagnostics:
-        bytecode = generate(parsed.program)
+    try:
+        parsed = parser.parse()
+        program = parsed.program
+        diagnostics.extend(parsed.diagnostics)
+        if not diagnostics:
+            diagnostics.extend(analyse(program))
+        if not diagnostics:
+            bytecode = generate(program)
+    except RecursionError:
+        token = parser.current
+        diagnostics.append(Diagnostic(token.line, token.column,
+                                      "Program nesting exceeds the compiler recursion limit"))
     diagnostics.sort(key=lambda item: (item.line, item.column, item.message))
-    return CompilationResult(tokens, parsed.program, bytecode, diagnostics)
+    return CompilationResult(tokens, program, bytecode, diagnostics)

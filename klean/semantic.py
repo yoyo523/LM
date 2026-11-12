@@ -155,9 +155,12 @@ class SemanticAnalyzer:
     def _expression(self, node: Node, allow_min_magnitude: bool = False) -> str | None:
         kind = node.kind
         if kind == "Integer":
-            value = int(node.fields["decimal"])
             limit = INT_MAX + 1 if allow_min_magnitude else INT_MAX
-            if value > limit:
+            # Compare decimal strings before converting: very long literals
+            # can exceed Python's own integer conversion limit.
+            digits = node.fields["decimal"].lstrip("0") or "0"
+            bound = str(limit)
+            if len(digits) > len(bound) or (len(digits) == len(bound) and digits > bound):
                 self.error(node, "Integer literal is outside the signed 32-bit range")
             return "int"
         if kind == "Boolean":

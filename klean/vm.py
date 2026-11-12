@@ -29,7 +29,13 @@ class Frame:
 
 
 class VirtualMachine:
-    def __init__(self, program: BytecodeProgram, output: Callable[[str], None] = print):
+    def __init__(self, program: BytecodeProgram, output: Callable[[str], None] = print,
+                 *, max_steps: int = 1_000_000, max_frames: int = 1_000):
+        if max_steps <= 0 or max_frames <= 0:
+            raise ValueError("Execution limits must be positive")
+        self.max_steps = max_steps
+        self.max_frames = max_frames
+        self.steps = 0
         self.program = program
         self.output = output
         self.stack: list[object] = []
@@ -46,6 +52,9 @@ class VirtualMachine:
             if frame.ip >= len(frame.code):
                 raise KleanRuntimeError(f"Execution left {frame.name!r} without HALT or RETURN")
             instruction = frame.code[frame.ip]
+            if self.steps >= self.max_steps:
+                raise KleanRuntimeError("Instruction limit exceeded", instruction)
+            self.steps += 1
             frame.ip += 1
             self._execute(instruction)
 
@@ -133,6 +142,8 @@ class VirtualMachine:
             if condition == (op == "JUMP_IF_TRUE"):
                 self.frame.ip = ins.argument
         elif op == "CALL":
+            if len(self.frames) - 1 >= self.max_frames:
+                raise KleanRuntimeError("Function call depth limit exceeded", ins)
             name, argument_count = ins.argument
             function = self.program.functions.get(name)
             if function is None:
@@ -162,5 +173,6 @@ class VirtualMachine:
             raise KleanRuntimeError(f"Unknown bytecode operation {op!r}", ins)
 
 
-def execute(program: BytecodeProgram, output: Callable[[str], None] = print) -> None:
-    VirtualMachine(program, output).run()
+def execute(program: BytecodeProgram, output: Callable[[str], None] = print,
+            *, max_steps: int = 1_000_000, max_frames: int = 1_000) -> None:
+    VirtualMachine(program, output, max_steps=max_steps, max_frames=max_frames).run()

@@ -1,13 +1,13 @@
 # Member A: Klean syntax front end
 
 This AI-assisted implementation follows the supplied Assignment 2a grammar.
-It is not a complete compiler or evidence of independently authored student
-work. The repository records course restrictions on AI-generated assignment
+It is not evidence of independently authored student work.
+The repository records course restrictions on AI-generated assignment
 content; check permitted use before including this implementation in assessed work.
 
 ## Run
 
-Requires Python 3.9 or newer; no third-party packages.
+Requires Python 3.10 or newer; no third-party packages.
 Run from the repository root:
 
 ```sh
@@ -15,9 +15,11 @@ python3 -m unittest discover -s tests -v
 python3 -m klean examples/report_examples.kln
 ```
 
-The second command prints JSON AST, not program output. Exit status is 0 for
-valid syntax and 1 for read, lexical or syntax errors. Diagnostics go to stderr.
-No bytecode generation, type checking or execution is implemented.
+The second command compiles and executes the program, printing 23, 6 and 21.
+Use `--ast --no-run` to inspect the AST. Exit status is 0 on success, 1 for
+read or compilation errors, and 2 for runtime errors or invalid CLI arguments.
+Diagnostics go to stderr. Semantic analysis, bytecode generation and a stack
+VM are now integrated; see README.md for the complete pipeline.
 
 ## Integration contract
 
@@ -69,21 +71,20 @@ after `print(counter)` becomes a semicolon, and the typographic dash becomes `-`
 Arrays, constants and input have not been added: the feedback requests them,
 but the group has not yet supplied their grammar or semantics.
 
-## Responsibilities remaining outside this module
+## Responsibilities outside the Parser
 
-Semantic analysis must enforce declarations, scopes, operand and argument types,
-Boolean conditions, return placement/types, constant rules if adopted, and int32
-range rules. Integer tokens remain strings so the semantic stage can correctly
-handle the signed minimum and oversized literals.
-The runtime must implement short-circuit Boolean evaluation, recursion, activation
-records, integer division and the group's chosen overflow/uninitialized-read policy.
-Parsing `and`/`or` does not by itself implement short-circuit evaluation.
+Semantic analysis now checks declarations, scopes, operand and argument types,
+Boolean conditions, return placement/types and int32 literal ranges.
+The VM implements checked arithmetic, recursion and activation records; bytecode
+jumps implement short-circuit evaluation. Uninitialised reads and functions
+that finish without returning are runtime errors. Constants remain unsupported.
 
 ## Verification and limitations
 
 Tests check precedence/associativity by AST structure, declaration and function
 shapes, source positions, error rejection, recovery and token-stream validation.
-The report examples should eventually output 23, 6 and 21 respectively, but
-these runtime outputs are not verified by this parser-only implementation.
-Deeply nested input may reach Python's recursion limit; this is a teaching front
-end, with no resource-limit hardening. Linux execution has not yet been verified.
+CLI integration tests verify the report example outputs 23, 6 and 21.
+Excessive nesting is reported by the compiler pipeline as a diagnostic.
+VM instruction and function-depth budgets bound execution. These are teaching
+limits, not a security sandbox or a comprehensive memory limit.
+See validation.md for platform evidence and remaining limitations.

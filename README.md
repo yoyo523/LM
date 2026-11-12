@@ -11,7 +11,11 @@ newer.
 
 ## Quick start
 
-From the project directory, run:
+1. Install Python 3.10 or newer and check `python3 --version`.
+2. Clone or download this repository and enter the extracted project directory.
+3. No pip packages or compilation step are required; all dependencies are in
+   the Python standard library.
+4. Run the example:
 
 ```bash
 python3 -m klean examples/report_examples.kln
@@ -35,6 +39,19 @@ python3 -m klean examples/report_examples.kln --bytecode --no-run
 
 Compilation errors are printed as `file:line:column: message`. Runtime errors
 use exit status 2; compilation errors use exit status 1.
+Invalid command-line arguments also use status 2.
+
+Execution defaults to at most 1,000,000 VM instructions and 1,000 active
+function calls. Increase these positive limits for larger trusted programs:
+
+```bash
+python3 -m klean examples/report_examples.kln --max-steps 2000000 --max-frames 2000
+```
+
+Exceeding a limit reports a runtime error. Already printed output is retained.
+Deep source/AST nesting is rejected with a compilation diagnostic; the exact
+threshold depends on the Python interpreter. These limits are not a security
+sandbox and do not bound source-file size or total memory.
 
 ## Run the tests
 
@@ -45,6 +62,18 @@ python3 -m unittest discover -s tests -v
 The suite covers lexical positions and errors, parser recovery, precedence,
 static type rules, scopes, function calls, recursion, short-circuit logic,
 32-bit arithmetic, code generation, and end-to-end execution.
+
+Run the reproducible performance sample with:
+
+```bash
+python3 -m examples.benchmark
+```
+
+See [validation results](docs/validation.md) for environments, measurements and
+remaining checks. The runtime and tests need no third-party packages.
+AddressSanitizer, UndefinedBehaviorSanitizer and LeakSanitizer are not applicable
+to this pure-Python implementation. Python linting, typing and coverage tools
+are optional quality checks, not equivalent substitutes for those sanitizers.
 
 ## Language reference
 
@@ -135,3 +164,8 @@ variables that are declared before the function. Bytecode jumps implement
 
 The lexer continues after illegal characters. The parser recovers at semicolons,
 closing braces, and statement starts so a single run can report multiple errors.
+
+Uninitialised reads and missing function returns are checked at runtime;
+there is no static definite-assignment or all-path return analysis. Arrays,
+constants and input statements are not implemented. Their required syntax and
+semantics must be confirmed against the group's design and marking rubric.

@@ -129,7 +129,7 @@ class CodeGenerator:
     def _expression(self, node: Node) -> None:
         kind = node.kind
         if kind == "Integer":
-            self._emit("PUSH", int(node.fields["decimal"]), node)
+            self._emit("PUSH", int(node.fields["decimal"].lstrip("0") or "0"), node)
             return
         if kind == "Boolean":
             self._emit("PUSH", node.fields["value"], node)
@@ -145,7 +145,7 @@ class CodeGenerator:
         if kind == "Unary":
             operand = node.fields["operand"]
             if node.fields["operator"] == "-" and operand.kind == "Integer":
-                self._emit("PUSH", -int(operand.fields["decimal"]), node)
+                self._emit("PUSH", -int(operand.fields["decimal"].lstrip("0") or "0"), node)
             else:
                 self._expression(operand)
                 self._emit("NEG" if node.fields["operator"] == "-" else "NOT", node=node)
