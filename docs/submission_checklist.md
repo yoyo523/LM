@@ -1,113 +1,74 @@
 # Assignment 2b submission checklist
 
-This is Member C's release checklist. It distinguishes requirements evidenced
-in this repository from details that must still be confirmed in Canvas before
-submission.
+This checklist covers the whole project. It records verified implementation
+evidence separately from official submission details that still need confirmation.
 
-## Marking rubric (25 points)
+## Verified assignment deliverables
 
-The rubric supplied to the group assesses five criteria. The detailed
-``view longer description`` text is not reproduced here, so final decisions
-must still use the Canvas version.
+- [x] Compiler source, semantic analysis, bytecode generator, and VM in `klean/`.
+- [x] Python 3.10+ quick start and standard-library-only dependencies in README.
+- [x] Complete [language reference](language_reference.md) and
+  [grammar/AST contract](parser_contract.md).
+- [x] Independent sample programs with stdin/stdout/error/exit expectations in
+  `examples/manifest.json` and [sample guide](../examples/README.md).
+- [x] Lexer, parser, semantic, runtime, CLI, boundary and sample regression tests.
+- [x] Original report example outputs `23`, `6`, `21`; features output
+  `15`, `true`; deliberate error samples return documented failures.
+- [x] Token, AST and bytecode inspection without execution or reading input.
+- [x] Additional programs verify mutual recursion, lexical globals, shadowing,
+  early return, ordered comparisons, and array parameter/result copying.
+- [x] [Design-change record](design_changes.md) addresses the supplied 2a
+  feedback: arrays, constants, input, test expectations and corrected syntax.
+- [x] Array typing, constant writes and input errors have positive and negative
+  regression coverage.
+- [x] Linux Python 3.10 container verification and reproducible benchmark command.
+- [x] Private home-directory paths removed from submitted documentation.
+- [x] Earlier test counts/measurements separated into historical validation.
+- [x] Clean archive excludes course exercises, Git metadata, caches and output.
+- [x] Archive includes implementation, tests, examples/manifest, documents and scripts.
+- [x] Extracted archive tests and examples verified; see [validation](validation.md).
 
-| Criterion | Points | Current evidence | Submission check |
-| --- | ---: | --- | --- |
-| Basic Functionality | 7 | Variables, expressions, control flow, functions, recursion, typed values, and errors are covered by `tests/test_execution.py`, `tests/test_semantic.py`, and `tests/test_cli.py`. | Re-run the full suite and manually run the examples from a clean release folder. |
-| Advanced Functionality | 3 | Recursion, lexical scopes/shadowing, short-circuit Boolean operations, checked 32-bit arithmetic, and execution limits are implemented and tested. | Confirm these are presented as working language features, not merely source code. |
-| Basic Compilation Process | 7 | `klean/` provides tokenisation, parsing/AST, semantic analysis, bytecode generation, and VM execution. Tests and CLI inspection flags expose these stages. | Verify a marker can run `--tokens`, `--ast`, `--bytecode`, valid programs, and invalid programs without modifying source code. |
-| Advanced Compilation Process | 3 | Parser recovery, recursive calls, activation frames, short-circuit bytecode jumps, scoped lookup, diagnostics, and resource limits have dedicated tests. | Ensure every claimed advanced process has an executable test or a documented example. |
-| Documentation & Ease of Use | 5 | README documents setup, commands, language behaviour, limits, project structure, and tests; validation and release documents record evidence. | Remove private paths, verify every command after extracting the archive, and describe final tests clearly. |
+## Rubric evidence (25 points)
 
-### Full-mark evidence checklist
+| Criterion | Points | Evidence |
+| --- | ---: | --- |
+| Basic Functionality | 7 | Typed variables/constants/arrays, integer input, expressions, branches/loops; execution, semantic and extension tests |
+| Advanced Functionality | 3 | Recursive/mutually recursive functions, array parameters/results, lexical scope/shadowing, short-circuit behaviour |
+| Basic Compilation Process | 7 | Tokenisation, parser/AST, semantic checks, code generation and VM; inspection commands and independent sample tests |
+| Advanced Compilation Process | 3 | Scoped type/const validation, jump generation, call frames, panic recovery; corresponding integration tests |
+| Documentation & Ease of Use | 5 | README, language reference, examples with expected results, QA matrix and clean-release instructions |
 
-- [ ] All implemented language features can be demonstrated by a sample or an
-  automated test.
-- [ ] Tokenisation, lexical analysis, syntax analysis, semantic analysis,
-  bytecode generation, and execution can each be inspected or tested directly.
-- [ ] A marker can write a small Klean program using the README without changing
-  the implementation.
-- [ ] Advanced features have both a clear language rule and regression coverage.
-- [ ] Code comments, README, test command, sample programs, and package layout
-  work from a fresh extracted archive.
+This is an evidence map, not a score prediction. The expanded official rubric
+determines the required breadth of high-level functions/processes. See
+[requirements](requirements.md) for the source and remaining uncertainties.
 
-## Confirm from Canvas before final submission
+## User confirmation before final upload
 
-- [ ] Submission deadline, upload location, and required archive format.
-- [ ] Any rubric details hidden behind Canvas's ``view longer description`` and
-  any mandatory features beyond the supplied Assignment 2b brief.
-- [ ] Whether the marker expects a compiler, interpreter, or either form.
-- [ ] Required development/runtime platform and any prohibited dependencies.
-- [ ] Current academic-integrity and permitted-assistance requirements.
+- [ ] Check the expandable Canvas rubric descriptions for any additional
+  mandatory language features or compilation processes.
+- [ ] Confirm the exact deadline, upload location, archive naming/format, and
+  any required cover sheet or contribution statement.
+- [ ] Confirm current permitted-assistance rules and provide any required
+  declaration of actual contributions/assistance. Sole maintenance now does
+  not change historical authorship.
+- [ ] After any further edits, regenerate and retest the actual final archive.
+- [ ] Upload the required archive to Canvas and confirm successful receipt.
 
-Do not mark these items complete based only on repository documentation.
+The supplied brief accepts a compiler or interpreter; this project compiles
+to bytecode and runs it in a VM. The 2a six-page design-report limit is not a
+new 2b deliverable requirement in the supplied text.
 
-## Required deliverables from the Assignment 2b brief
+## Release commands
 
-| Required item | Repository evidence | Status |
-| --- | --- | --- |
-| Source code | `klean/` | Complete |
-| Run/compilation instructions | [README](../README.md) | Complete |
-| Sample test programs | `examples/` | Complete |
-| Syntax and semantic rules | [README](../README.md), [parser contract](parser_contract.md) | Complete |
-| Automated tests | `tests/` and the command below | Complete |
-| Evidence of expected output | `tests/test_cli.py`, [validation record](validation.md) | Complete |
-
-Run the full suite from the repository root:
+From the repository root:
 
 ```sh
 python3 -m unittest discover -s tests -v
-```
-
-Run the main example:
-
-```sh
 python3 -m klean examples/report_examples.kln
+python3 -m klean examples/arrays_constants.kln
+printf '7\n' | python3 -m klean examples/input.kln
+python3 scripts/package_submission.py ../klean-assignment-2b.zip
 ```
 
-Expected output:
-
-```text
-23
-6
-21
-```
-
-## Functional release checks
-
-- [ ] The full test command passes in the final release directory.
-- [ ] `examples/report_examples.kln` prints `23`, `6`, and `21` on separate lines.
-- [ ] `examples/features.kln` prints its documented results.
-- [ ] `examples/errors.kln` fails with diagnostics and a non-zero exit code.
-- [ ] `--tokens --no-run`, `--ast --no-run`, and `--bytecode --no-run` work on
-  the report example.
-- [ ] An unreadable source file, lexical error, syntax error, semantic error,
-  runtime error, and invalid command-line limit return the documented exit code.
-- [ ] The final README matches the submitted command-line behaviour.
-
-## Documentation checks
-
-- [ ] README states the Python version requirement and that no third-party
-  packages are needed.
-- [ ] README explains installation, execution, testing, inspection options,
-  outputs, diagnostics, and execution limits.
-- [ ] README's grammar and semantic behaviour match implementation and tests.
-- [ ] Language limitations are explicit: arrays, constants, and input statements
-  are not implemented; definite assignment and all-path return checks occur at
-  runtime rather than statically.
-- [ ] Documentation contains no private absolute paths, machine-specific user
-  names, secrets, or inaccurate claims about unverified platforms.
-- [ ] The final contribution record accurately reflects work actually completed
-  by each group member and any permitted assistance.
-
-## Package checks
-
-- [ ] The archive contains `README.md`, `klean/`, `tests/`, `examples/`, `scripts/`, and
-  required supporting documentation.
-- [ ] The archive excludes `course/` (earlier automata learning exercises),
-  `.git/`, `__pycache__/`, `*.pyc`, virtual
-  environments, `.env` files, editor settings, and generated output.
-- [ ] The archive is extracted into a fresh directory and the functional release
-  checks above are rerun there.
-- [ ] The final archive name and format match Canvas instructions.
-
-See [the release guide](release_guide.md) for a repeatable packaging procedure.
+Use a new archive filename if it already exists, and follow the
+[release guide](release_guide.md) to inspect, extract, and verify its contents.

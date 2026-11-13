@@ -1,0 +1,10 @@
+// Expected stdout: 6
+let a: int = 54;
+let b: int = 24;
+let remainder: int;
+while (b != 0) {
+    a - (a / b) * b -> remainder;
+    b -> a;
+    remainder -> b;
+}
+print(a);

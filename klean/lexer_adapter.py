@@ -1,12 +1,9 @@
-"""Small reference scanner for exercising the parser before lexer integration.
-
-The lexer owner may replace this module while retaining the Token contract.
-"""
+"""Token recognition and positioned diagnostics for Klean source files."""
 import re
 from .ast import Diagnostic, Token
 
-KEYWORDS = set('let int bool if else while fn return print true false and or not'.split())
-PATTERN = re.compile(r'(?P<SPACE>[ \t\r]+)|(?P<NEWLINE>\n)|(?P<COMMENT>//[^\n]*)|(?P<INT_LIT>[0-9]+)|(?P<ID>[a-zA-Z_][a-zA-Z0-9_]*)|(?P<SYMBOL>->|<=|>=|==|!=|[+*/<>=:;,(){}-])|(?P<INVALID>.)')
+KEYWORDS = set('let const int bool if else while fn return print true false and or not'.split())
+PATTERN = re.compile(r'(?P<SPACE>[ \t\r]+)|(?P<NEWLINE>\n)|(?P<COMMENT>//[^\n]*)|(?P<INT_LIT>[0-9]+)|(?P<ID>[a-zA-Z_][a-zA-Z0-9_]*)|(?P<SYMBOL>->|<=|>=|==|!=|[+*/<>=:;,(){}\[\]-])|(?P<INVALID>.)')
 
 
 def tokenize(source: str) -> tuple[list[Token], list[Diagnostic]]:

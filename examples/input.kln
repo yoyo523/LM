@@ -1,0 +1,4 @@
+// Supply one line containing 7. Expected stdout: 14
+const multiplier: int = 2;
+let number: int = input();
+print(number * multiplier);

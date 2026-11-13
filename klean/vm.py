@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import re
 from typing import Callable, cast
 
 from .bytecode import BytecodeProgram, FunctionCode, Instruction
@@ -30,7 +31,8 @@ class Frame:
 
 class VirtualMachine:
     def __init__(self, program: BytecodeProgram, output: Callable[[str], None] = print,
-                 *, max_steps: int = 1_000_000, max_frames: int = 1_000):
+                 *, max_steps: int = 1_000_000, max_frames: int = 1_000,
+                 input_reader: Callable[[], str] = input):
         if max_steps <= 0 or max_frames <= 0:
             raise ValueError("Execution limits must be positive")
         self.max_steps = max_steps
@@ -38,6 +40,7 @@ class VirtualMachine:
         self.steps = 0
         self.program = program
         self.output = output
+        self.input_reader = input_reader
         self.stack: list[object] = []
         self.global_scope: dict[str, object] = {}
         self.frames: list[Frame] = [Frame("<main>", program.main, 0, [self.global_scope])]
@@ -76,6 +79,37 @@ class VirtualMachine:
             return self.global_scope
         raise KleanRuntimeError(f"Variable {name!r} is not available", instruction)
 
+    def _array(self, value: object, index: object, ins: Instruction) -> list:
+        if value is UNINITIALISED:
+            raise KleanRuntimeError("Array is uninitialised", ins)
+        if not isinstance(value, list) or type(index) is not int:
+            raise KleanRuntimeError("Array access requires an array and int index", ins)
+        if index < 0 or index >= len(value):
+            raise KleanRuntimeError("Array index out of bounds", ins)
+        return value
+
+    def _input_int(self, ins: Instruction) -> int:
+        try:
+            text = self.input_reader().strip()
+        except EOFError:
+            raise KleanRuntimeError("Input reached end of file", ins) from None
+        except (OSError, UnicodeError) as error:
+            raise KleanRuntimeError(f"Cannot read input: {error}", ins) from None
+        if re.fullmatch(r"[+-]?[0-9]+", text) is None:
+            raise KleanRuntimeError("Input must be a signed decimal integer", ins)
+        digits = text.lstrip("+-").lstrip("0") or "0"
+        if len(digits) > 10:
+            raise KleanRuntimeError("Input is outside the signed 32-bit range", ins)
+        number = int(digits) * (-1 if text.startswith("-") else 1)
+        if number < INT_MIN or number > INT_MAX:
+            raise KleanRuntimeError("Input is outside the signed 32-bit range", ins)
+        return number
+
+    def _format_value(self, value: object) -> str:
+        if isinstance(value, list):
+            return "[" + ", ".join(self._format_value(item) for item in value) + "]"
+        return str(value).lower() if type(value) is bool else str(value)
+
     def _execute(self, ins: Instruction) -> None:
         op = ins.operation
         if op == "PUSH":
@@ -93,9 +127,22 @@ class VirtualMachine:
             value = self._lookup_scope(ins.argument, ins)[ins.argument]
             if value is UNINITIALISED:
                 raise KleanRuntimeError(f"Variable {ins.argument!r} is uninitialised", ins)
-            self.stack.append(value)
+            # Arrays have value semantics: reads do not create mutable aliases.
+            self.stack.append(value.copy() if isinstance(value, list) else value)
         elif op == "STORE":
             self._lookup_scope(ins.argument, ins)[ins.argument] = self._pop(ins)
+        elif op == "INPUT":
+            self.stack.append(self._input_int(ins))
+        elif op == "BUILD_ARRAY":
+            self.stack.append([self._pop(ins) for _ in range(ins.argument)][::-1])
+        elif op == "LOAD_INDEX":
+            index = self._pop(ins)
+            array = self._array(self._pop(ins), index, ins)
+            self.stack.append(array[cast(int, index)])
+        elif op == "STORE_INDEX":
+            index, value = self._pop(ins), self._pop(ins)
+            array = self._lookup_scope(ins.argument, ins)[ins.argument]
+            self._array(array, index, ins)[cast(int, index)] = value
         elif op == "ENTER_SCOPE":
             self.frame.scopes.append({})
         elif op == "EXIT_SCOPE":
@@ -104,7 +151,7 @@ class VirtualMachine:
             self.frame.scopes.pop()
         elif op == "PRINT":
             value = self._pop(ins)
-            self.output(str(value).lower() if type(value) is bool else str(value))
+            self.output(self._format_value(value))
         elif op == "NEG":
             self.stack.append(self._checked_int(-cast(int, self._pop(ins)), ins))
         elif op == "NOT":
@@ -182,5 +229,7 @@ class VirtualMachine:
 
 
 def execute(program: BytecodeProgram, output: Callable[[str], None] = print,
-            *, max_steps: int = 1_000_000, max_frames: int = 1_000) -> None:
-    VirtualMachine(program, output, max_steps=max_steps, max_frames=max_frames).run()
+            *, max_steps: int = 1_000_000, max_frames: int = 1_000,
+            input_reader: Callable[[], str] = input) -> None:
+    VirtualMachine(program, output, max_steps=max_steps, max_frames=max_frames,
+                   input_reader=input_reader).run()

@@ -31,7 +31,7 @@ The archive has a single `klean-assignment-2b/` root containing:
 - `README.md`
 - `klean/`: Python implementation
 - `tests/`: Python regression tests
-- `examples/`: Klean samples and Python demonstrations/benchmark
+- `examples/`: Klean samples, expectation manifest/guide, and Python demonstrations/benchmark
 - `docs/`: Markdown language, QA, and release documentation
 - `scripts/`: packaging and Linux verification scripts
 
@@ -61,6 +61,8 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m klean examples/features.kln
 python3 -m klean examples/report_examples.kln --tokens --no-run
 python3 -m klean examples/report_examples.kln --ast --no-run
 python3 -m klean examples/report_examples.kln --bytecode --no-run
+python3 -m klean examples/arrays_constants.kln
+printf '7\n' | python3 -m klean examples/input.kln
 ```
 
 Optional Linux verification requires a running Docker installation:

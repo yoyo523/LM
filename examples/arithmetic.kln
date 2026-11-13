@@ -1,0 +1,6 @@
+// Expected stdout: 23
+let x: int = 15;
+let y: int = 4;
+let result: int;
+x + y * 2 -> result;
+print(result);

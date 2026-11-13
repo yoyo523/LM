@@ -15,8 +15,8 @@ class Token:
 class Node:
     """AST record; fields are specified in docs/parser_contract.md.
 
-    The anchor token locates the construct. Function/VarDecl additionally carry
-    name_token, and Assign carries target_token, for precise name diagnostics.
+    The anchor token locates the construct. Function/VarDecl/ConstDecl carry
+    name_token; Assign/AssignIndex carry target_token for precise name diagnostics.
     Consumers must reject trees accompanied by lexer or parser diagnostics.
     """
     kind: str

@@ -1,0 +1,15 @@
+// Expected stdout: 12, [2, 9, 6], [2, 4, 6], [true, false]
+const count: int = 3;
+const source: int[] = [2, 4, 6];
+let values: int[] = source;
+let index: int = 0;
+let total: int = 0;
+while (index < count) {
+    total + values[index] -> total;
+    index + 1 -> index;
+}
+print(total);
+9 -> values[1];
+print(values);
+print(source);
+print([true, false]);

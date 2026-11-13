@@ -82,7 +82,7 @@ class CodeGenerator:
 
     def _statement(self, node: Node) -> None:
         kind = node.kind
-        if kind == "VarDecl":
+        if kind in {"VarDecl", "ConstDecl"}:
             initializer = node.fields["initializer"]
             if initializer is None:
                 self._emit("PUSH_UNINITIALISED", node=node)
@@ -93,6 +93,12 @@ class CodeGenerator:
         if kind == "Assign":
             self._expression(node.fields["value"])
             self._emit("STORE", node.fields["target"], node)
+            return
+        if kind == "AssignIndex":
+            # Pipeline value precedes evaluation of the destination index.
+            self._expression(node.fields["value"])
+            self._expression(node.fields["index"])
+            self._emit("STORE_INDEX", node.fields["target"], node)
             return
         if kind == "Print":
             self._expression(node.fields["value"])
@@ -128,6 +134,19 @@ class CodeGenerator:
 
     def _expression(self, node: Node) -> None:
         kind = node.kind
+        if kind == "Input":
+            self._emit("INPUT", node=node)
+            return
+        if kind == "Array":
+            for element in node.fields["elements"]:
+                self._expression(element)
+            self._emit("BUILD_ARRAY", len(node.fields["elements"]), node)
+            return
+        if kind == "Index":
+            self._expression(node.fields["array"])
+            self._expression(node.fields["index"])
+            self._emit("LOAD_INDEX", node=node)
+            return
         if kind == "Integer":
             self._emit("PUSH", int(node.fields["decimal"].lstrip("0") or "0"), node)
             return

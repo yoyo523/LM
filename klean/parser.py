@@ -1,4 +1,4 @@
-"""Recursive descent parser for the Assignment 2a Klean grammar."""
+"""Recursive descent parser for Klean, including the documented 2b extensions."""
 from __future__ import annotations
 
 from typing import NoReturn
@@ -104,14 +104,18 @@ class Parser:
                 return
             if depth == 0 and self.accept(';'):
                 return
-            if depth == 0 and self.position > start and self.current.kind in {'let', 'if', 'while', 'return', 'print', 'fn'}:
+            if depth == 0 and self.position > start and self.current.kind in {'let', 'const', 'if', 'while', 'return', 'print', 'fn'}:
                 return
             self.take()
 
     def type_name(self) -> str:
         if self.current.kind not in {'int', 'bool'}:
             self.fail('Expected type int or bool')
-        return self.take().kind
+        name = self.take().kind
+        if self.accept('['):
+            self.expect(']')
+            name += '[]'
+        return name
 
     def block(self) -> Node:
         token = self.expect('{')
@@ -139,13 +143,18 @@ class Parser:
 
     def statement(self) -> Node:
         token = self.current
-        if self.accept('let'):
+        if self.current.kind in {'let', 'const'}:
+            constant = self.take().kind == 'const'
             name = self.expect('ID')
             self.expect(':')
             type_name = self.type_name()
-            value = self.expression() if self.accept('=') else None
+            if constant:
+                self.expect('=')
+                value = self.expression()
+            else:
+                value = self.expression() if self.accept('=') else None
             self.expect(';')
-            return self.node('VarDecl', token, name=name.text, name_token=name,
+            return self.node('ConstDecl' if constant else 'VarDecl', token, name=name.text, name_token=name,
                              type=type_name, initializer=value)
         if self.current.kind in {'if', 'while'}:
             keyword = self.take().kind
@@ -170,6 +179,12 @@ class Parser:
         value = self.expression()
         self.expect('->')
         target = self.expect('ID')
+        if self.accept('['):
+            index = self.expression()
+            self.expect(']')
+            self.expect(';')
+            return self.node('AssignIndex', token, value=value, target=target.text,
+                             target_token=target, index=index)
         self.expect(';')
         return self.node('Assign', token, value=value, target=target.text, target_token=target)
 
@@ -193,7 +208,23 @@ class Parser:
         if self.current.kind in {'-', 'not'}:
             token = self.take()
             return self.node('Unary', token, operator=token.kind, operand=self.factor())
+        value = self.primary()
+        while self.current.kind == '[':
+            token = self.take()
+            index = self.expression()
+            self.expect(']')
+            value = self.node('Index', token, array=value, index=index)
+        return value
+
+    def primary(self) -> Node:
         token = self.current
+        if self.accept('['):
+            # Nonempty literals avoid an ambiguous element type for [].
+            elements = [self.expression()]
+            while self.accept(','):
+                elements.append(self.expression())
+            self.expect(']')
+            return self.node('Array', token, elements=elements)
         if self.accept('INT_LIT'):
             # Preserve decimal text: range and signed-minimum handling belong
             # to the semantic stage, not Python's arbitrary precision integers.
@@ -204,6 +235,9 @@ class Parser:
         if self.accept('ID'):
             if not self.accept('('):
                 return self.node('Variable', token, name=token.text)
+            if token.text == 'input':
+                self.expect(')')
+                return self.node('Input', token)
             arguments = []
             if self.current.kind != ')':
                 while True:

@@ -1,0 +1,12 @@
+// Expected stdout: 2, false, 2
+let value: int = 1;
+fn increase() -> int {
+    value + 1 -> value;
+    return value;
+}
+if (true) {
+    let value: bool = false;
+    print(increase());
+    print(value);
+}
+print(value);

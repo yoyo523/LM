@@ -1,0 +1,20 @@
+[
+  {"file": "report_examples.kln", "stdout": "23\n6\n21\n", "exit": 0},
+  {"file": "features.kln", "stdout": "15\ntrue\n", "exit": 0},
+  {"file": "arithmetic.kln", "stdout": "23\n", "exit": 0},
+  {"file": "gcd.kln", "stdout": "6\n", "exit": 0},
+  {"file": "fibonacci.kln", "stdout": "21\n", "exit": 0},
+  {"file": "arrays_constants.kln", "stdout": "12\n[2, 9, 6]\n[2, 4, 6]\n[true, false]\n", "exit": 0},
+  {"file": "input.kln", "stdin": "7\n", "stdout": "14\n", "exit": 0},
+  {"file": "scope.kln", "stdout": "2\nfalse\n2\n", "exit": 0},
+  {"file": "short_circuit.kln", "stdout": "false\ntrue\n", "exit": 0},
+  {"file": "errors.kln", "stdout": "", "exit": 1, "stderr_contains": "Cannot initialise"},
+  {"file": "invalid/lexical.kln", "stdout": "", "exit": 1, "stderr_contains": "Illegal character"},
+  {"file": "invalid/syntax.kln", "stdout": "", "exit": 1, "stderr_contains": "Expected"},
+  {"file": "invalid/constant.kln", "stdout": "", "exit": 1, "stderr_contains": "Cannot modify constant"},
+  {"file": "invalid/array_bounds.kln", "stdout": "", "exit": 2, "stderr_contains": "Array index out of bounds"},
+  {"file": "invalid/division.kln", "stdout": "", "exit": 2, "stderr_contains": "Division by zero"},
+  {"file": "input.kln", "stdin": "invalid\n", "stdout": "", "exit": 2, "stderr_contains": "Input must be"},
+  {"file": "input.kln", "stdin": "", "stdout": "", "exit": 2, "stderr_contains": "Input reached end of file"},
+  {"file": "input.kln", "stdin": "2147483648\n", "stdout": "", "exit": 2, "stderr_contains": "Input is outside"}
+]

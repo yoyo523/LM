@@ -1,6 +1,6 @@
 # QA test matrix
 
-This matrix maps the requested Member B checks to executable tests. All tests
+This matrix maps language and compiler checks to executable tests. All tests
 listed as **enabled** run under the standard `unittest` discovery command; no
 semantic or interpreter cases remain parked or skipped because those stages are
 now implemented.
@@ -11,7 +11,7 @@ Run everything from the repository root:
 python3 -m unittest discover -s tests -v
 python3 -m klean examples/report_examples.kln
 python3 -m examples.benchmark
-./scripts/verify_linux.sh
+sh scripts/verify_linux.sh
 ```
 
 The Linux verification script requires Docker; Docker is optional for normal
@@ -59,6 +59,19 @@ Klean execution and local tests.
 | Missing return/uninitialised read | boundary and execution tests | Controlled runtime error | Enabled |
 | Full CLI path | `CLITests.test_report_example` | Exit 0; stdout is exactly `23\n6\n21\n`; stderr is empty | Enabled |
 
+## Arrays, constants, input, and independent samples
+
+| Case | Executable evidence | Expected result |
+| --- | --- | --- |
+| Array indexing, copying and output | LanguageExtensionTests array tests | Correct int/bool values; originals preserved |
+| Array typing, bounds and initialisation | Extension negative tests | Static type errors or controlled runtime errors |
+| Constants and shadowing | Constant modification/duplicate/scope tests | Immutable bindings/elements; legal shadowing |
+| Input text, EOF and int32 edges | Input extension tests and CLI sample manifest | Valid input accepted; invalid/EOF/range errors fail cleanly |
+| Original variable named input | test_input_name_backward_compatibility | Old 2a source still works; builtin cannot be redefined |
+| Mutual recursion, globals and nested returns | Extension integration tests | Lexical scope, global writes and return unwinding |
+| Standalone samples | SampleTests.test_all_documented_samples | Every manifest case matches stdout, stderr and exit |
+| Inspection without input | SampleTests.test_extension_inspection_does_not_read_input | Token/AST/bytecode succeeds with empty stdin |
+
 ## Stress and performance
 
 | Case | Executable check | Expected result | Status |
@@ -77,8 +90,8 @@ Performance values are observations, not pass/fail thresholds. See
 
 Native-code ASan, UBSan and LeakSanitizer do not apply to this pure-Python
 implementation. The standard-library `compileall` check passed in the current
-checkout. Mypy results from Member B's earlier run are recorded separately in
-validation.md. `ruff` and `coverage.py` are intentionally not project dependencies.
+checkout. Mypy results from an earlier run are recorded in validation_history.md
+and do not establish type-checking of subsequent extensions. `ruff` and `coverage.py` are intentionally not project dependencies.
 To evaluate them in an isolated development environment without changing the
 runtime dependency set:
 

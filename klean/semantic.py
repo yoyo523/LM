@@ -20,11 +20,17 @@ class FunctionType:
     result: str
 
 
+@dataclass(frozen=True)
+class VariableType:
+    type_name: str
+    constant: bool = False
+
+
 class SemanticAnalyzer:
     def __init__(self) -> None:
         self.diagnostics: list[Diagnostic] = []
         self.functions: dict[str, FunctionType] = {}
-        self.scopes: list[dict[str, str]] = []
+        self.scopes: list[dict[str, VariableType]] = []
         self.current_return_type: str | None = None
 
     def error(self, node: Node, message: str) -> None:
@@ -53,6 +59,9 @@ class SemanticAnalyzer:
 
     def _declare_function(self, node: Node) -> None:
         name = node.fields["name"]
+        if name == "input":
+            self.error(node, "Function name 'input' is reserved for the input builtin")
+            return
         if name in self.functions:
             self.error(node, f"Function {name!r} is already declared")
             return
@@ -65,19 +74,24 @@ class SemanticAnalyzer:
     def _pop_scope(self) -> None:
         self.scopes.pop()
 
-    def _declare_variable(self, node: Node, name: str, type_name: str) -> None:
+    def _declare_variable(self, node: Node, name: str, type_name: str,
+                          constant: bool = False) -> None:
         scope = self.scopes[-1]
         if name in scope:
             self.error(node, f"Variable {name!r} is already declared in this scope")
         else:
-            scope[name] = type_name
+            scope[name] = VariableType(type_name, constant)
 
-    def _lookup_variable(self, node: Node, name: str) -> str | None:
+    def _lookup_binding(self, node: Node, name: str) -> VariableType | None:
         for scope in reversed(self.scopes):
             if name in scope:
                 return scope[name]
         self.error(node, f"Variable {name!r} has not been declared")
         return None
+
+    def _lookup_variable(self, node: Node, name: str) -> str | None:
+        binding = self._lookup_binding(node, name)
+        return binding.type_name if binding is not None else None
 
     def _function(self, node: Node) -> None:
         previous_return = self.current_return_type
@@ -101,7 +115,7 @@ class SemanticAnalyzer:
 
     def _statement(self, node: Node) -> None:
         kind = node.kind
-        if kind == "VarDecl":
+        if kind in {"VarDecl", "ConstDecl"}:
             declared_type = node.fields["type"]
             initializer = node.fields["initializer"]
             if initializer is not None:
@@ -111,10 +125,22 @@ class SemanticAnalyzer:
                         initializer,
                         f"Cannot initialise {declared_type} variable with {actual}",
                     )
-            self._declare_variable(node, node.fields["name"], declared_type)
+            self._declare_variable(node, node.fields["name"], declared_type,
+                                   constant=kind == "ConstDecl")
             return
-        if kind == "Assign":
-            target_type = self._lookup_variable(node, node.fields["target"])
+        if kind in {"Assign", "AssignIndex"}:
+            binding = self._lookup_binding(node, node.fields["target"])
+            target_type = binding.type_name if binding is not None else None
+            if binding is not None and binding.constant:
+                self.error(node, f"Cannot modify constant {node.fields['target']!r}")
+            if kind == "AssignIndex":
+                self._check_index(node.fields["index"])
+                if target_type is not None:
+                    if not target_type.endswith("[]"):
+                        self.error(node, "Indexed assignment requires an array")
+                        target_type = None
+                    else:
+                        target_type = target_type[:-2]
             value_type = self._expression(node.fields["value"])
             if (
                 target_type is not None
@@ -153,8 +179,35 @@ class SemanticAnalyzer:
         if actual is not None and actual != "bool":
             self.error(node, f"{owner} condition must have type bool, found {actual}")
 
+    def _check_index(self, node: Node) -> None:
+        actual = self._expression(node)
+        if actual is not None and actual != "int":
+            self.error(node, f"Array index must have type int, found {actual}")
+
     def _expression(self, node: Node, allow_min_magnitude: bool = False) -> str | None:
         kind = node.kind
+        if kind == "Input":
+            return "int"
+        if kind == "Array":
+            types = [self._expression(element) for element in node.fields["elements"]]
+            element_type = next((t for t in types if t is not None), None)
+            if element_type is None:
+                return None
+            if element_type not in {"int", "bool"}:
+                self.error(node, "Only one-dimensional int or bool arrays are supported")
+                return None
+            if any(t is not None and t != element_type for t in types):
+                self.error(node, "Array elements must have the same type")
+            return element_type + "[]"
+        if kind == "Index":
+            array_type = self._expression(node.fields["array"])
+            self._check_index(node.fields["index"])
+            if array_type is None:
+                return None
+            if not array_type.endswith("[]"):
+                self.error(node, "Indexing requires an array")
+                return None
+            return array_type[:-2]
         if kind == "Integer":
             limit = INT_MAX + 1 if allow_min_magnitude else INT_MAX
             # Compare decimal strings before converting: very long literals

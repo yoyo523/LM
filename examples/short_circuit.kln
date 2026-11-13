@@ -1,0 +1,4 @@
+// No stdin required; input() and division by zero are skipped.
+// Expected stdout: false, true
+print(false and (input() == 1));
+print(true or (1 / 0 == 0));

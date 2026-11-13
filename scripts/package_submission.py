@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 CONTENTS = {
     "klean": {".py"},
     "tests": {".py"},
-    "examples": {".py", ".kln"},
+    "examples": {".py", ".kln", ".md", ".json"},
     "docs": {".md"},
     "scripts": {".py", ".sh"},
 }

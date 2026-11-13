@@ -1,213 +1,60 @@
-# Validation record
+# Current validation
 
-## Submission packaging check (2026-11-13)
+The current implementation includes the array/constant/input extensions
+documented in [design changes](design_changes.md). Historical test counts and
+platform measurements are preserved separately in [validation history](validation_history.md).
 
-The standard-library packaging script produced an archive with 33 files.
-Archive integrity and required contents were checked; `course/`, Git metadata,
-Python caches, and generated archives were absent. The extracted archive passed
-all 66 tests on Python 3.12.4; report and feature examples printed `23`, `6`,
-`21` and `15`, `true` respectively. Reusing an existing output filename was
-rejected without replacing the archive. See [release guide](release_guide.md)
-for the reproducible commands. This verifies packaging; Canvas-specific final
-submission checks still apply.
-
-## Member B QA completion (2026-11-13)
-
-The current root project contains **66 tests**. The full suite, bytecode
-compilation check, report example, benchmark, and Linux verification script all
-completed successfully after the final `if`/`else` end-to-end case and parser
-delimiter cases were integrated.
-
-Commands run from the repository root:
+## Reproduce
 
 ```sh
 python3 -m unittest discover -s tests -v
-python3 -m compileall -q klean examples tests
-./scripts/verify_linux.sh
+python3 -m compileall -q klean examples tests scripts
+sh scripts/verify_linux.sh
 ```
+
+The suite includes lexer/parser, semantic, VM, CLI, boundary, extension and sample
+tests. Sample tests execute all 18 manifest cases with exact stdin/stdout, exit
+status and diagnostic expectations. No test cases are deliberately skipped.
+
+## Verified results (2026-11-13)
 
 | Environment | Result |
 | --- | --- |
-| macOS 15.1 arm64, Python 3.12.4 | 66 tests passed in 0.746 seconds; `compileall` passed |
-| Linux Docker container, Python 3.10.22 | 66 tests passed in 1.725 seconds; report example printed `23`, `6`, `21` |
+| macOS 15.1 arm64 / Python 3.12.4, working tree | 86 tests passed; compileall passed |
+| Debian 13 aarch64 Docker / Python 3.10.22, read-only source | 86 tests passed; report output correct; benchmark completed |
+| Freshly extracted ZIP / macOS Python 3.12.4 | 86 tests passed; standalone examples and all inspection commands passed |
+| Freshly extracted ZIP / Linux Python 3.10.22 Docker | 86 tests passed; report output correct; benchmark completed |
 
-The Linux command used the official `python:3.10-slim` image at digest
+The Linux checks used `python:3.10-slim`, image digest
 `sha256:6ff506466f8b1e981719b468cc0023b8ef000b983cdec0eafe119d01f379e31d`.
-The source directory is mounted read-only and no packages are installed in the
-container. The observed container was Debian 13/glibc 2.41 on aarch64 Docker
-Linux; this is a reproducible Linux userspace test, not a claim of native
-hardware validation.
+No packages were installed in the container. This verifies Linux userspace in
+Docker, not native hardware installation.
 
-The Linux benchmark reports median compile/execute milliseconds over five
-repetitions: 3,000 statements `33.790 / 3.489`; a 100-term expression
-`0.598 / 0.134`; and 10,000 loop iterations `0.113 / 73.073`. These are
-observations, not performance guarantees. See [the QA matrix](qa_matrix.md)
-for the case-to-test mapping.
+The archive contained 53 files, including the sample expectation JSON and all
+required implementation/tests/docs/scripts. Integrity and exclusions were
+checked: no `course/`, Git metadata, Python caches, or nested archives. Original
+report stdout remains `23`, `6`, `21`. Arrays/constants output is `12`,
+`[2, 9, 6]`, `[2, 4, 6]`, `[true, false]`; input `7` produces `14`.
 
-## Member B earlier QA evidence (2026-11-13)
+Linux benchmark medians from the extracted archive (five repetitions; compile /
+execute milliseconds): 3,000 statements `33.104 / 3.817`, 100-term expression
+`0.643 / 0.140`, 10,000 loop iterations `0.085 / 75.536`. Timings exclude startup,
+file I/O and terminal output and are observations rather than thresholds.
 
-The following results were recorded by Member B before the integration above.
-They describe a separate macOS/Python 3.9.6 and Linux x86_64 run.
+All current local Markdown links resolve. Current documentation was checked
+for private home-directory paths. Old counts and measurements in the history
+file are not current totals.
 
-The current tree has **66 tests**. All 66 pass both locally and in a clean,
-read-only Linux container. The CLI now executes Klean programs by default; the
-report example prints exactly `23`, `6`, `21` rather than AST JSON.
+## Limits and remaining official checks
 
-The Linux verification used the official `python:3.10-slim` image at digest
-`sha256:6ff506466f8b1e981719b468cc0023b8ef000b983cdec0eafe119d01f379e31d`:
-
-- Linux x86_64 under Docker Desktop emulation
-- Debian 13 (trixie), glibc 2.41
-- Python 3.10.22
-- source mounted read-only
-- no packages installed and no third-party runtime dependencies
-
-Commands run from the repository root:
-
-```sh
-python3 -m unittest discover -s tests -v
-python3 -m klean examples/report_examples.kln
-python3 -m examples.benchmark
-./scripts/verify_linux.sh
-PYTHONPYCACHEPREFIX=/tmp/klean-pycache python3 -m compileall -q klean examples tests
-mypy klean examples/benchmark.py
-```
-
-Results:
-
-- macOS/Python 3.9.6: 66 tests passed in 0.996 seconds; report output passed.
-- Linux/Python 3.10.22: 66 tests passed in 3.972 seconds; report output passed.
-- `compileall`: passed.
-- mypy 1.11.2: no issues in 11 source files.
-- `ruff` and `coverage.py`: not installed and not added as dependencies. See the
-  [QA matrix](qa_matrix.md#optional-quality-tools) for isolated installation and
-  run commands.
-
-Current Linux performance medians over five repetitions:
-
-| Case | Compile (ms) | Execute (ms) |
-| --- | ---: | ---: |
-| 3,000 statements | 69.664 | 7.970 |
-| 100-term expression | 1.254 | 0.308 |
-| 10,000 loop iterations | 0.238 | 164.390 |
-
-The added end-to-end case explicitly exercises both `if` and `else` through a
-function call. Parser malformed-input coverage now explicitly includes missing
-opening and closing parentheses. Static-type-only edits make the production
-modules pass mypy without changing the language behaviour. The full requested
-case-to-expectation mapping is in [qa_matrix.md](qa_matrix.md).
-
-## Frontend code-review follow-up (2026-11-13)
-
-The suite now contains **65 tests**, all passing locally on macOS/Python 3.9.6.
-The report example still outputs `23`, `6`, `21`. Seven new tests exercise the
-frontend without semantic/VM imports. The formal Assignment 2a EBNF was located
-in Downloads and reviewed against the implementation, resolving the missing-
-source limitation recorded below. See [frontend review](frontend_review.md).
-Earlier counts and Linux/performance measurements below are historical results.
-
-## Parser/AST follow-up (2026-11-12)
-
-After the runtime-limits update, 12 Parser contract/integration tests were added.
-The full suite now has **58 tests**, all passing on macOS with Python 3.9.6 and
-the Linux `python:3.10-slim` container with Python 3.10.22. The Linux report
-example still prints exactly `23`, `6`, `21`.
-
-The added checks cover identifier-token preservation and exact semantic error
-locations, JSON serialization, lexer token compatibility, nested-block recovery,
-consecutive syntax errors, EOF boundaries, direct Parser recursion handling,
-valid nested blocks and combined call/scope/return execution. See
-[the Parser checklist](parser_contract.md) for the two external confirmations
-still required: a replacement lexer (if any) and the final approved grammar.
-
-The measurements and 46-test results below are the earlier runtime-limits
-baseline, retained as historical evidence; performance was not remeasured for
-this Parser follow-up.
-
-## Runtime-limits baseline
-
-Recorded on 2026-11-12 for the runtime-limits and validation update based on
-commit `2c88e95`. All commands run from the repository root.
-
-## Functional verification
-
-```sh
-python3 -m unittest discover -s tests -v
-python3 -m klean examples/report_examples.kln
-python3 -m examples.benchmark
-```
-
-The suite has 46 tests. It covers parser diagnostics, semantic type/name errors,
-scope shadowing, runtime errors, int32 bounds, short-circuit side effects,
-resource limits and real CLI subprocess execution. The CLI tests check stdout,
-stderr and exit status, including missing files and inspection without execution.
-The report example produces exactly `23`, `6`, `21` on separate lines.
-
-| Environment | Result |
-| --- | --- |
-| macOS 26.0.1 arm64, Python 3.9.6 | 46 tests passed; additional compatibility observation, not the documented minimum |
-| Linux x86_64 container, Python 3.10.12, glibc 2.35 | 46 tests passed; report example passed |
-| Linux container, official `python:3.10-slim` image, Python 3.10.22 | 46 tests passed; report example passed |
-
-Linux was tested using Docker on macOS, with the existing
-`ghcr.io/uadelaide/pdc:2026.S2.0` image under x86_64 emulation. This verifies a
-Linux userspace, not a native Linux hardware installation. No dependencies were
-installed in the container. The source directory was mounted read-only.
-The official Python image was also tested successfully without installing any
-additional packages (image digest
-`sha256:6ff506466f8b1e981719b468cc0023b8ef000b983cdec0eafe119d01f379e31d`).
-
-Reproduce with an available Python Linux image:
-
-```sh
-docker run --rm -v "$PWD:/work:ro" -w /work \
-  -e PYTHONDONTWRITEBYTECODE=1 python:3.10-slim \
-  python3 -m unittest discover -s tests -v
-```
-
-## Stress cases and execution policy
-
-- 3,000 sequential print statements execute successfully.
-- A 100-term addition expression executes successfully.
-- 2,000 nested parentheses or blocks and a 3,000-term expression produce a
-  compilation diagnostic instead of a Python recursion traceback.
-- A 5,000-digit out-of-range literal is rejected before integer conversion;
-  5,000 leading zeroes on a valid small number are accepted.
-- Infinite loops terminate at the instruction budget. Recursive calls terminate
-  at the call-depth budget. Boundary tests check exact successful/failed limits.
-- Defaults are 1,000,000 instructions and 1,000 active function calls, excluding
-  the main frame. Each instruction, including HALT, consumes one step.
-- The CLI exposes `--max-steps` and `--max-frames`; the Python `execute()` API
-  exposes corresponding keyword arguments. Limits must be positive.
-
-The compiler nesting threshold is implementation-dependent. No total memory,
-wall-clock or source-size budget is enforced. This is not a security sandbox.
-
-## Performance sample
-
-`python3 -m examples.benchmark` reports the median of five runs per case.
-Compilation and VM execution are timed separately with `time.perf_counter()`.
-Program output goes to a no-op callback. Timings exclude interpreter startup,
-file I/O and terminal printing. There is no timing assertion in unit tests.
-
-| Case | macOS compile / execute (ms) | Linux x86_64 emulation compile / execute (ms) |
-| --- | --- | --- |
-| 3,000 statements | 69.181 / 7.338 | 107.138 / 12.189 |
-| 100-term expression | 1.229 / 0.277 | 9.737 / 1.187 |
-| 10,000 loop iterations | 0.226 / 147.546 | 0.779 / 339.141 |
-
-These are observations from this machine, not performance guarantees or a fair
-cross-platform comparison. CPU load, emulation and Python versions differ.
-
-## Remaining checks
-
-- Reconcile the language features with the actual Assignment 2a feedback and
-  Assignment 2b rubric. Arrays, constants and input remain unsupported.
-- Confirm the group's policies: overflow raises a runtime error, division
-  truncates towards zero, and uninitialised reads/missing returns are runtime
-  errors. Static definite-assignment and all-path return analysis are absent.
-- Dedicated lint, type-check and coverage reports have not been produced in the
-  final root checkout. Native-code Sanitizers are not applicable to this
-  pure-Python codebase.
-- Prepare the final submission archive only after checking the required contents
-  and documenting contributions and permitted assistance accurately.
+- VM budgets bound instruction count and function depth. They do not bound
+  source size, array allocation/copying memory, elapsed time, or waiting for input.
+- Compiler nesting thresholds depend on Python. Excessive nesting produces a
+  diagnostic; no compiler optimisation is claimed.
+- Static definite-assignment and all-path-return analyses are not implemented;
+  unavailable/uninitialised reads and missing returns produce runtime errors.
+- Arrays are one-dimensional and nonempty. Input is integer-only.
+- Native-code sanitizers do not apply to pure Python. Earlier mypy results do not
+  validate subsequent extensions; no new lint/type/coverage result is claimed.
+- Canvas expandable rubric, exact submission rules, and actual contribution/
+  assistance declarations still require user confirmation.

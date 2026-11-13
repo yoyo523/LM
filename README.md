@@ -1,8 +1,9 @@
 # Klean Compiler and Virtual Machine
 
-Klean is a statically typed teaching language with `int` and `bool` values,
-explicit braces, recursive functions, and left-to-right pipeline assignment.
-The implementation follows the Assignment 2a design:
+Klean is a statically typed teaching language with integers, booleans, typed
+one-dimensional arrays, constants, integer input, recursive functions, and
+pipeline assignment. It implements the Assignment 2a design with the extensions
+recorded in [design changes](docs/design_changes.md):
 
 `source -> lexer -> parser/AST -> semantic analysis -> bytecode -> virtual machine`
 
@@ -74,7 +75,7 @@ remaining checks. The runtime and tests need no third-party packages.
 See the [QA test matrix](docs/qa_matrix.md) for lexer/parser, semantic, runtime,
 end-to-end and stress cases with their expected results and activation status.
 See the [Parser/AST contract](docs/parser_contract.md) for the token interface,
-implemented grammar, identifier locations and Member A's integration checklist.
+implemented grammar, identifier locations and frontend integration checks.
 Use the [submission checklist](docs/submission_checklist.md) and
 [release guide](docs/release_guide.md) before packaging the final archive.
 AddressSanitizer, UndefinedBehaviorSanitizer and LeakSanitizer are not applicable
@@ -82,6 +83,11 @@ to this pure-Python implementation. Python linting, typing and coverage tools
 are optional quality checks, not equivalent substitutes for those sanitizers.
 
 ## Language reference
+
+Read the [complete language reference](docs/language_reference.md) to write or
+modify programs. The [sample guide](examples/README.md) lists independent examples,
+required stdin, exact outputs, and intentional errors. The
+[requirements map](docs/requirements.md) links the assignment/rubric to evidence.
 
 ### Types and variables
 
@@ -95,6 +101,21 @@ let ready: bool;
 counter + 1 -> counter;
 true -> ready;
 ```
+
+Constants require initialization; arrays use zero-based indexing and value copying:
+
+```klean
+const limit: int = 3;
+const source: int[] = [2, 4, 6];
+let values: int[] = source;
+9 -> values[1];
+print(values); // [2, 9, 6]
+print(source); // [2, 4, 6]
+```
+
+Array literals are nonempty and homogeneous; `int[]` and `bool[]` are supported.
+Assigning to a constant or its elements is a compile error. Invalid array
+indices cause runtime errors.
 
 An inner block may shadow a variable from an outer block. Duplicate names in
 the same scope are rejected.
@@ -133,7 +154,7 @@ print(Fibonacci(8));
 
 From highest to lowest precedence:
 
-1. Parentheses and calls
+1. Parentheses, calls, and array indexing
 2. Unary `-` and `not`
 3. `*` and `/`
 4. `+` and `-`
@@ -144,6 +165,19 @@ From highest to lowest precedence:
 
 `and` and `or` use short-circuit evaluation. Division truncates towards zero.
 Arithmetic outside the signed 32-bit range causes a runtime error.
+
+### Input and samples
+
+`input()` reads one signed int32 from one line of standard input. Invalid input
+or EOF causes a runtime error. No prompt is printed. For example:
+
+```sh
+printf '7\n' | python3 -m klean examples/input.kln
+```
+
+Expected output is `14`. Run `examples/arrays_constants.kln` for arrays and
+constants. The normal test command checks all expectations in
+`examples/manifest.json`, including stdin and error exit codes.
 
 ## Project structure
 
@@ -175,6 +209,6 @@ The lexer continues after illegal characters. The parser recovers at semicolons,
 closing braces, and statement starts so a single run can report multiple errors.
 
 Uninitialised reads and missing function returns are checked at runtime;
-there is no static definite-assignment or all-path return analysis. Arrays,
-constants and input statements are not implemented. Their required syntax and
-semantics must be confirmed against the group's design and marking rubric.
+there is no static definite-assignment or all-path return analysis. Arrays are
+one-dimensional and nonempty; no slicing, append, or length built-in is provided.
+Input is integer-only. Waiting for input is not bounded by VM instruction limits.

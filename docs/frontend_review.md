@@ -1,9 +1,15 @@
-# Klean frontend code review — 2026-11-13
+# Historical Klean frontend code review — 2026-11-13
+
+This record covers the original grammar before arrays, constants, and input
+were added. See [design changes](design_changes.md) for the subsequent extensions
+and [parser contract](parser_contract.md) for the final grammar. Historical
+test counts below describe that earlier review.
 
 ## Scope and source
 
 Reviewed `klean/parser.py`, `klean/ast.py`, `klean/lexer_adapter.py`,
-`tests/test_parser.py`, the contract tests and `docs/member_a_handoff.md`.
+`tests/test_parser.py`, the contract tests and the frontend notes (then named
+`member_a_handoff.md`, now [frontend_notes.md](frontend_notes.md)).
 Baseline: commit `6b27506`, branch `codex/validation-and-runtime-limits`.
 This checkout already includes semantic analysis and a VM; the task description
 that these are absent refers to an earlier project state. They were not modified.
