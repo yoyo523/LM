@@ -1,12 +1,11 @@
 # Release and packaging guide
 
-Use this guide only after the group agrees that the implementation and
-documentation are ready. Confirm the archive filename and format with Canvas
-before creating the final submission.
+Confirm the archive filename and format required by Canvas before submission.
+The packaging command uses only Python's standard library.
 
-## 1. Verify the working tree
+## 1. Verify the project
 
-From the repository root, review changes and run the release checks:
+Run from the repository root:
 
 ```sh
 git status --short
@@ -16,69 +15,60 @@ python3 -m klean examples/features.kln
 python3 -m klean examples/errors.kln
 ```
 
-The first two example programs must succeed. `errors.kln` is intentionally
-invalid and must report diagnostics with a non-zero exit status.
+The report example must print `23`, `6`, `21` on separate lines. The features
+example must print `15`, `true`. The errors example intentionally fails with
+compilation diagnostics and exit status 1.
 
-Check the final README against actual command-line behaviour:
+## 2. Package only Assignment 2b deliverables
 
 ```sh
+python3 scripts/package_submission.py ../klean-assignment-2b.zip
+```
+
+Use a new destination filename; existing archives are never overwritten.
+The archive has a single `klean-assignment-2b/` root containing:
+
+- `README.md`
+- `klean/`: Python implementation
+- `tests/`: Python regression tests
+- `examples/`: Klean samples and Python demonstrations/benchmark
+- `docs/`: Markdown language, QA, and release documentation
+- `scripts/`: packaging and Linux verification scripts
+
+The explicit folder and file-type selection excludes `course/`, `.git/`,
+`__pycache__/`, `.pyc` files, `.DS_Store`, virtual environments, hidden files,
+symbolic links, and generated archives. `course/` contains earlier automata
+learning exercises, is retained in the development repository, and is not
+needed to run or mark the Klean implementation.
+
+## 3. Inspect and extract the archive
+
+```sh
+python3 -m zipfile -l ../klean-assignment-2b.zip
+python3 -m zipfile -t ../klean-assignment-2b.zip
+release_check=$(mktemp -d)
+python3 -m zipfile -e ../klean-assignment-2b.zip "$release_check"
+cd "$release_check/klean-assignment-2b"
+```
+
+Check that no `course/` folder or cache files appear in the archive listing.
+Run the tests and examples from this extracted directory:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -v
+PYTHONDONTWRITEBYTECODE=1 python3 -m klean examples/report_examples.kln
+PYTHONDONTWRITEBYTECODE=1 python3 -m klean examples/features.kln
 python3 -m klean examples/report_examples.kln --tokens --no-run
 python3 -m klean examples/report_examples.kln --ast --no-run
 python3 -m klean examples/report_examples.kln --bytecode --no-run
 ```
 
-## 2. Prepare a clean release folder
-
-Create a new, empty release folder outside the repository so generated files do
-not become tracked. Replace `klean-assignment-2b` with the Canvas-required name.
-Choose a name that does not already exist; the command below intentionally
-stops if it would overwrite an existing folder.
+Optional Linux verification requires a running Docker installation:
 
 ```sh
-release_root="../klean-assignment-2b"
-mkdir "$release_root"
-cp -R README.md klean tests examples docs "$release_root/"
+sh scripts/verify_linux.sh
 ```
 
-Do not include `.git/`, `__pycache__/`, virtual environments, `.env` files,
-editor settings, benchmark output, or files unrelated to Assignment 2b.
-
-## 3. Test the release folder
-
-Run the same commands from the copied folder, not from the development checkout:
-
-```sh
-cd "$release_root"
-python3 -m unittest discover -s tests -v
-python3 -m klean examples/report_examples.kln
-```
-
-The expected report-example output is:
-
-```text
-23
-6
-21
-```
-
-## 4. Create and inspect the archive
-
-Return to the parent directory and use the archive format required by Canvas.
-For a zip submission:
-
-```sh
-cd ..
-zip -r klean-assignment-2b.zip klean-assignment-2b
-unzip -l klean-assignment-2b.zip
-```
-
-For a tar.gz submission:
-
-```sh
-tar -czf klean-assignment-2b.tar.gz klean-assignment-2b
-tar -tzf klean-assignment-2b.tar.gz
-```
-
-Extract the chosen archive into a separate temporary directory and repeat the
-test command one final time. Upload only the required archive after the Canvas
-requirements and the checklist have been confirmed.
+Upload the archive after the Canvas requirements and submission checklist are
+confirmed. If Canvas requires another archive format, package this same
+extracted deliverable folder in that format and verify it again.

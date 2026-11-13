@@ -1,5 +1,16 @@
 # Validation record
 
+## Submission packaging check (2026-11-13)
+
+The standard-library packaging script produced an archive with 33 files.
+Archive integrity and required contents were checked; `course/`, Git metadata,
+Python caches, and generated archives were absent. The extracted archive passed
+all 66 tests on Python 3.12.4; report and feature examples printed `23`, `6`,
+`21` and `15`, `true` respectively. Reusing an existing output filename was
+rejected without replacing the archive. See [release guide](release_guide.md)
+for the reproducible commands. This verifies packaging; Canvas-specific final
+submission checks still apply.
+
 ## Member B QA completion (2026-11-13)
 
 The current root project contains **66 tests**. The full suite, bytecode

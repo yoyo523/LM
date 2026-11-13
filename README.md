@@ -158,6 +158,9 @@ Arithmetic outside the signed 32-bit range causes a runtime error.
 - `klean/__main__.py`: command-line interface
 - `examples/`: runnable Klean programs
 - `tests/`: unit and integration tests
+- `scripts/`: submission packaging and optional Docker Linux verification
+- `course/`: earlier automata learning exercises, excluded from the submission
+  archive and not required to run Klean
 
 ## Implementation notes
 

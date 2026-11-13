@@ -101,9 +101,10 @@ Expected output:
 
 ## Package checks
 
-- [ ] The archive contains `README.md`, `klean/`, `tests/`, `examples/`, and
+- [ ] The archive contains `README.md`, `klean/`, `tests/`, `examples/`, `scripts/`, and
   required supporting documentation.
-- [ ] The archive excludes `.git/`, `__pycache__/`, `*.pyc`, virtual
+- [ ] The archive excludes `course/` (earlier automata learning exercises),
+  `.git/`, `__pycache__/`, `*.pyc`, virtual
   environments, `.env` files, editor settings, and generated output.
 - [ ] The archive is extracted into a fresh directory and the functional release
   checks above are rerun there.
