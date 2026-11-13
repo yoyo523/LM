@@ -5,10 +5,9 @@
 
 ## 运行
 
-在终端进入项目目录，再运行：
+在终端进入 repository root（包含 `klean/`、`examples/` 的项目目录），再运行：
 
 ```sh
-cd /Users/yoyo/Documents/LM
 python3 -m examples.parser_basics
 ```
 

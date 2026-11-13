@@ -8,7 +8,7 @@ Baseline: commit `6b27506`, branch `codex/validation-and-runtime-limits`.
 This checkout already includes semantic analysis and a VM; the task description
 that these are absent refers to an earlier project state. They were not modified.
 
-Formal source: `/Users/yoyo/Downloads/Assignment 2a.pdf`, Group 25,
+Formal source: Group 25's Assignment 2a design report,
 section 5, pages 3–4; text extracted and both grammar pages visually inspected.
 The PDF is not copied into the repository. This review applies to that design,
 not to unprovided later amendments or a marking rubric.
