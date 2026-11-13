@@ -73,6 +73,8 @@ See [validation results](docs/validation.md) for environments, measurements and
 remaining checks. The runtime and tests need no third-party packages.
 See the [Parser/AST contract](docs/parser_contract.md) for the token interface,
 implemented grammar, identifier locations and Member A's integration checklist.
+Use the [submission checklist](docs/submission_checklist.md) and
+[release guide](docs/release_guide.md) before packaging the final archive.
 AddressSanitizer, UndefinedBehaviorSanitizer and LeakSanitizer are not applicable
 to this pure-Python implementation. Python linting, typing and coverage tools
 are optional quality checks, not equivalent substitutes for those sanitizers.
