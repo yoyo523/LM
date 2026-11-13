@@ -14,6 +14,9 @@ def tokenize(source: str) -> tuple[list[Token], list[Diagnostic]]:
     line, line_start = 1, 0
     for match in PATTERN.finditer(source):
         kind, text = match.lastgroup, match.group()
+        # Every alternative in PATTERN is named, so a successful match always
+        # has a token kind. Keep the invariant explicit for static type checks.
+        assert kind is not None
         column = match.start() - line_start + 1
         if kind == 'NEWLINE':
             line += 1

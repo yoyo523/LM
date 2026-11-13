@@ -1,6 +1,8 @@
 """Recursive descent parser for the Assignment 2a Klean grammar."""
 from __future__ import annotations
 
+from typing import NoReturn
+
 from .ast import Diagnostic, Node, ParseResult, Token
 
 
@@ -39,7 +41,7 @@ class Parser:
     def describe_current(self) -> str:
         return 'end of input' if self.current.kind == 'EOF' else repr(self.current.text)
 
-    def fail(self, message: str):
+    def fail(self, message: str) -> NoReturn:
         t = self.current
         self.diagnostics.append(Diagnostic(t.line, t.column, message))
         raise ParseError(message)

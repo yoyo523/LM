@@ -1,5 +1,55 @@
 # Validation record
 
+## Member B final QA (2026-11-13)
+
+The current tree has **66 tests**. All 66 pass both locally and in a clean,
+read-only Linux container. The CLI now executes Klean programs by default; the
+report example prints exactly `23`, `6`, `21` rather than AST JSON.
+
+The Linux verification used the official `python:3.10-slim` image at digest
+`sha256:6ff506466f8b1e981719b468cc0023b8ef000b983cdec0eafe119d01f379e31d`:
+
+- Linux x86_64 under Docker Desktop emulation
+- Debian 13 (trixie), glibc 2.41
+- Python 3.10.22
+- source mounted read-only
+- no packages installed and no third-party runtime dependencies
+
+Commands run from the repository root:
+
+```sh
+python3 -m unittest discover -s tests -v
+python3 -m klean examples/report_examples.kln
+python3 -m examples.benchmark
+./scripts/verify_linux.sh
+PYTHONPYCACHEPREFIX=/tmp/klean-pycache python3 -m compileall -q klean examples tests
+mypy klean examples/benchmark.py
+```
+
+Results:
+
+- macOS/Python 3.9.6: 66 tests passed in 0.996 seconds; report output passed.
+- Linux/Python 3.10.22: 66 tests passed in 3.972 seconds; report output passed.
+- `compileall`: passed.
+- mypy 1.11.2: no issues in 11 source files.
+- `ruff` and `coverage.py`: not installed and not added as dependencies. See the
+  [QA matrix](qa_matrix.md#optional-quality-tools) for isolated installation and
+  run commands.
+
+Current Linux performance medians over five repetitions:
+
+| Case | Compile (ms) | Execute (ms) |
+| --- | ---: | ---: |
+| 3,000 statements | 69.664 | 7.970 |
+| 100-term expression | 1.254 | 0.308 |
+| 10,000 loop iterations | 0.238 | 164.390 |
+
+The added end-to-end case explicitly exercises both `if` and `else` through a
+function call. Parser malformed-input coverage now explicitly includes missing
+opening and closing parentheses. Static-type-only edits make the production
+modules pass mypy without changing the language behaviour. The full requested
+case-to-expectation mapping is in [qa_matrix.md](qa_matrix.md).
+
 ## Frontend code-review follow-up (2026-11-13)
 
 The suite now contains **65 tests**, all passing locally on macOS/Python 3.9.6.
@@ -109,7 +159,8 @@ cross-platform comparison. CPU load, emulation and Python versions differ.
 - Confirm the group's policies: overflow raises a runtime error, division
   truncates towards zero, and uninitialised reads/missing returns are runtime
   errors. Static definite-assignment and all-path return analysis are absent.
-- Dedicated lint, type-check and coverage reports have not been produced.
-  Native-code Sanitizers are not applicable to this pure-Python codebase.
+- Mypy now passes. Ruff and coverage reports remain optional because those
+  tools are not installed or declared as project dependencies. Native-code
+  Sanitizers are not applicable to this pure-Python codebase.
 - Prepare the final submission archive only after checking the required contents
   and documenting contributions and permitted assistance accurately.
