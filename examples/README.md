@@ -1,10 +1,8 @@
-# Executable examples and expected results
+# Examples
 
 Run from the repository root with Python 3.10+. Every output below ends with a
-newline. The machine-readable source of expectations is `manifest.json`.
-The normal test command executes all 24 cases through the real CLI, both with
-and without optimisation, and checks
-stdin, stdout, exit status, and diagnostic fragments:
+newline. `manifest.json` lists the inputs, outputs and exit codes. The normal
+test command runs all 24 cases with optimisation on and off:
 
 ```sh
 python3 -m unittest discover -s tests -v
@@ -65,7 +63,7 @@ python3 -m klean examples/optimization.kln --bytecode --no-run --no-optimize
 ```
 
 `--heap-stats` produces a separate JSON line on stderr after successful execution.
-See [advanced features](../docs/advanced_features.md) for limits and semantics.
+See [implementation notes](../docs/implementation.md) for limits and semantics.
 
 ## Inspecting the compilation pipeline
 

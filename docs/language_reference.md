@@ -1,8 +1,7 @@
 # Klean language reference
 
-This describes the submitted implementation. See [design changes](design_changes.md)
-for the extensions made after Assignment 2a and [the parser contract](parser_contract.md)
-for the complete grammar and AST interface.
+The [grammar](parser_contract.md) lists the productions used by the parser.
+[Implementation notes](implementation.md) explain how the main features work.
 
 ## Source text and names
 
@@ -71,8 +70,8 @@ printed, compared for equality, or assigned as whole values. Reading an array
 produces a copy; assignments and function arguments therefore do not introduce
 mutable aliases. Mutating a parameter does not mutate the caller's array. The
 constant array itself remains immutable even when a mutable copy is changed.
-There are no append or slice operations. `len(a)` reports an array's length. A whole-array assignment may
-replace an array with a different-length array of the same element type.
+There are no append or slice operations. `len(a)` reports an array's length.
+Whole-array assignment may change its length while keeping the element type.
 
 ## Operators and evaluation
 
@@ -108,7 +107,7 @@ left-to-right, and dynamically allocates a filled array. Negative lengths are
 runtime errors. `collect()` runs the VM-owned tracing collector and returns the
 number of reclaimed objects. Heap roots include globals, all active scopes and
 the operand stack; automatic collection runs before an allocation exceeds the
-configured slot budget. See [advanced features](advanced_features.md) for the
+configured slot budget. See [implementation notes](implementation.md) for the
 algorithm, accounting and `--heap-stats` inspection.
 
 ## Statements and control flow
@@ -170,7 +169,7 @@ A symbolic `T` allows assignment, equality, printing and returning values;
 arithmetic or a Boolean condition requires a concrete corresponding type.
 Inconsistent inference is rejected. Explicit type arguments at calls, constraints
 and nested arrays are not supported. Examples and details are in
-[advanced features](advanced_features.md).
+[implementation notes](implementation.md).
 
 ## Input and output
 
@@ -204,7 +203,7 @@ and 1,000,000 heap slots (elements plus array headers). `--max-steps`,
 `--max-frames` and `--max-heap-slots` accept positive integers. Excessive compiler
 nesting produces a diagnostic. There are no total memory, source-size, or
 wall-clock limits, and waiting for `input()` is not bounded by the instruction
-budget. Static definite-assignment analysis is not implemented. Constant folding and
-dead-code removal run after semantic checking; `--no-optimize` disables them.
+budget. Static definite-assignment analysis is not implemented. Constant folding
+and dead-code removal run after semantic checking; `--no-optimize` disables them.
 Faulting arithmetic and observable side effects are preserved. See
-[advanced features](advanced_features.md) for the transformation rules.
+[implementation notes](implementation.md) for the transformation rules.

@@ -16,5 +16,4 @@ docker run --rm \
     python3 --version
     python3 -m unittest discover -s tests -v
     python3 -m klean examples/report_examples.kln
-    python3 -m examples.benchmark
   '
