@@ -63,6 +63,10 @@ python3 -m klean examples/report_examples.kln --ast --no-run
 python3 -m klean examples/report_examples.kln --bytecode --no-run
 python3 -m klean examples/arrays_constants.kln
 printf '7\n' | python3 -m klean examples/input.kln
+python3 -m klean examples/generics.kln
+printf '3\n' | python3 -m klean examples/memory.kln --heap-stats
+python3 -m klean examples/optimization.kln --optimization-report --no-run
+python3 -m klean examples/optimization.kln --no-optimize
 ```
 
 Optional Linux verification requires a running Docker installation:

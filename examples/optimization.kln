@@ -1,0 +1,9 @@
+// Expected stdout is 20, 7 with and without --no-optimize.
+fn answer() -> int {
+    return 7;
+    print(999);
+}
+print((2 + 3) * 4);
+if (false) { print(888); }
+while (false) { print(777); }
+print(answer());

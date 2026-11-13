@@ -16,5 +16,11 @@
   {"file": "invalid/division.kln", "stdout": "", "exit": 2, "stderr_contains": "Division by zero"},
   {"file": "input.kln", "stdin": "invalid\n", "stdout": "", "exit": 2, "stderr_contains": "Input must be"},
   {"file": "input.kln", "stdin": "", "stdout": "", "exit": 2, "stderr_contains": "Input reached end of file"},
-  {"file": "input.kln", "stdin": "2147483648\n", "stdout": "", "exit": 2, "stderr_contains": "Input is outside"}
+  {"file": "input.kln", "stdin": "2147483648\n", "stdout": "", "exit": 2, "stderr_contains": "Input is outside"},
+  {"file": "generics.kln", "stdout": "7\n[false, false]\ntrue\n", "exit": 0},
+  {"file": "memory.kln", "stdin": "3\n", "stdout": "3\n[5, 5, 5]\ntrue\n5\n", "exit": 0},
+  {"file": "optimization.kln", "stdout": "20\n7\n", "exit": 0},
+  {"file": "optimization.kln", "options": ["--no-optimize"], "stdout": "20\n7\n", "exit": 0},
+  {"file": "invalid/generic.kln", "stdout": "", "exit": 1, "stderr_contains": "must have type int"},
+  {"file": "invalid/heap_limit.kln", "stdout": "", "exit": 2, "stderr_contains": "Heap slot limit"}
 ]

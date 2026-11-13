@@ -12,12 +12,14 @@ from .ast import Diagnostic, Node
 
 INT_MIN = -(2**31)
 INT_MAX = 2**31 - 1
+BUILTINS = {"input", "array", "len", "collect"}
 
 
 @dataclass(frozen=True)
 class FunctionType:
     parameters: tuple[str, ...]
     result: str
+    type_parameters: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -32,6 +34,7 @@ class SemanticAnalyzer:
         self.functions: dict[str, FunctionType] = {}
         self.scopes: list[dict[str, VariableType]] = []
         self.current_return_type: str | None = None
+        self.type_parameters: set[str] = set()
 
     def error(self, node: Node, message: str) -> None:
         token = node.fields.get("target_token", node.fields.get("name_token", node.token))
@@ -44,6 +47,7 @@ class SemanticAnalyzer:
         self.functions = {}
         self.scopes = [{}]
         self.current_return_type = None
+        self.type_parameters = set()
 
         items = program.fields["items"]
         for item in items:
@@ -59,14 +63,20 @@ class SemanticAnalyzer:
 
     def _declare_function(self, node: Node) -> None:
         name = node.fields["name"]
-        if name == "input":
-            self.error(node, "Function name 'input' is reserved for the input builtin")
+        if name in BUILTINS:
+            self.error(node, f"Function name {name!r} is reserved for a builtin")
             return
         if name in self.functions:
             self.error(node, f"Function {name!r} is already declared")
             return
         parameters = tuple(p.fields["type"] for p in node.fields["parameters"])
-        self.functions[name] = FunctionType(parameters, node.fields["return_type"])
+        type_parameters = tuple(node.fields.get("type_parameters", []))
+        if len(set(type_parameters)) != len(type_parameters):
+            self.error(node, "Duplicate generic type parameter")
+        for generic in type_parameters:
+            if not any(t in {generic, generic + "[]"} for t in parameters):
+                self.error(node, f"Generic type {generic!r} must occur in a parameter type")
+        self.functions[name] = FunctionType(parameters, node.fields["return_type"], type_parameters)
 
     def _push_scope(self) -> None:
         self.scopes.append({})
@@ -95,6 +105,8 @@ class SemanticAnalyzer:
 
     def _function(self, node: Node) -> None:
         previous_return = self.current_return_type
+        previous_types = self.type_parameters
+        self.type_parameters = set(node.fields.get("type_parameters", []))
         self.current_return_type = node.fields["return_type"]
         self._push_scope()
         for parameter in node.fields["parameters"]:
@@ -104,6 +116,7 @@ class SemanticAnalyzer:
         self._block(node.fields["body"], create_scope=False)
         self._pop_scope()
         self.current_return_type = previous_return
+        self.type_parameters = previous_types
 
     def _block(self, node: Node, create_scope: bool = True) -> None:
         if create_scope:
@@ -193,7 +206,7 @@ class SemanticAnalyzer:
             element_type = next((t for t in types if t is not None), None)
             if element_type is None:
                 return None
-            if element_type not in {"int", "bool"}:
+            if element_type not in {"int", "bool"} | self.type_parameters:
                 self.error(node, "Only one-dimensional int or bool arrays are supported")
                 return None
             if any(t is not None and t != element_type for t in types):
@@ -222,9 +235,12 @@ class SemanticAnalyzer:
         if kind == "Variable":
             return self._lookup_variable(node, node.fields["name"])
         if kind == "Call":
-            signature = self.functions.get(node.fields["name"])
             arguments = node.fields["arguments"]
             actual_types = [self._expression(argument) for argument in arguments]
+            name = node.fields["name"]
+            if name in {"array", "len", "collect"}:
+                return self._builtin(node, actual_types)
+            signature = self.functions.get(name)
             if signature is None:
                 self.error(node, f"Function {node.fields['name']!r} has not been declared")
                 return None
@@ -234,14 +250,32 @@ class SemanticAnalyzer:
                     f"Function {node.fields['name']!r} expects "
                     f"{len(signature.parameters)} arguments, found {len(arguments)}",
                 )
+            bindings: dict[str, str] = {}
             for index, (expected, actual) in enumerate(
                 zip(signature.parameters, actual_types), start=1
             ):
+                generic = expected[:-2] if expected.endswith("[]") else expected
+                if generic in signature.type_parameters and actual is not None:
+                    candidate = actual
+                    if expected.endswith("[]"):
+                        candidate = actual[:-2] if actual.endswith("[]") else "<not an array>"
+                    if candidate not in {"int", "bool"} | self.type_parameters:
+                        self.error(arguments[index - 1], "Generic type arguments must be scalar int or bool")
+                        continue
+                    if generic not in bindings:
+                        bindings[generic] = candidate
+                    expected = bindings[generic] + ("[]" if expected.endswith("[]") else "")
                 if actual is not None and actual != expected:
                     self.error(
                         arguments[index - 1],
                         f"Argument {index} must have type {expected}, found {actual}",
                     )
+            result_base = signature.result.removesuffix("[]")
+            if result_base in signature.type_parameters:
+                inferred = bindings.get(result_base)
+                if inferred is None:
+                    return None
+                return inferred + ("[]" if signature.result.endswith("[]") else "")
             return signature.result
         if kind == "Unary":
             operator = node.fields["operator"]
@@ -275,6 +309,28 @@ class SemanticAnalyzer:
 
         self.error(node, f"Unknown expression node {kind!r}")
         return None
+
+    def _builtin(self, node: Node, types: list[str | None]) -> str | None:
+        name = node.fields["name"]
+        arity = {"array": 2, "len": 1, "collect": 0}[name]
+        if len(types) != arity:
+            self.error(node, f"Builtin {name!r} expects {arity} arguments, found {len(types)}")
+            return None
+        if name == "collect":
+            return "int"
+        if name == "len":
+            if types[0] is not None and not types[0].endswith("[]"):
+                self.error(node, "len requires an array")
+            return "int"
+        if types[0] is not None and types[0] != "int":
+            self.error(node.fields["arguments"][0], "Array length must have type int")
+        fill_type = types[1]
+        if fill_type is None:
+            return None
+        if fill_type not in {"int", "bool"} | self.type_parameters:
+            self.error(node.fields["arguments"][1], "Array fill must be scalar int or bool")
+            return None
+        return fill_type + "[]"
 
 
 def analyse(program: Node) -> list[Diagnostic]:

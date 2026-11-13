@@ -38,20 +38,21 @@ The official examples include object orientation, encapsulation, polymorphism,
 generics, static/dynamic memory allocation, and garbage collection. They are
 examples rather than a requirement to implement every item.
 
-Current Klean has no user-level classes/objects, access controls, inheritance,
-polymorphic dispatch, generics, explicit allocation/deallocation syntax, or
-language/VM-owned garbage collector. Python classes used to build the compiler
-do not demonstrate object orientation in Klean.
+| Implemented advanced feature | Implementation | Evidence |
+| --- | --- | --- |
+| Generics | Parser type-parameter declarations; parametric body checking, argument inference and return substitution; erased bytecode bodies | `test_generics.py`, generic CLI/sample tests, `examples/generics.kln` |
+| Dynamic memory allocation | `array(length, fill)`, runtime length checking, VM-owned array handles/table and slot budget | `test_heap.py`, `examples/memory.kln`, heap-limit sample |
+| Garbage collection | Klean's mark-and-sweep root traversal, automatic pressure collection, explicit `collect()`, reclamation statistics | Heap roots/cycle/reclamation/budget tests; `--heap-stats` CLI tests |
 
-BUILD_ARRAY and array copying allocate Python lists at runtime; function calls
-allocate frames. That is host-backed runtime allocation, not evidence by itself
-of a separately implemented memory model or collector. No allocation/reclamation
-policy or independent memory-lifecycle tests are claimed.
+The heap's backing storage is Python, but logical object ownership, root tracing,
+reclamation and capacity are implemented in `klean/heap.py`; this is not a claim
+based solely on Python's GC. Generic bodies are checked with symbolic types,
+not just separately written int/bool functions. See
+[advanced features](advanced_features.md) for exact scope and limitations.
 
-Recursion, arrays, scope, and short-circuit operations remain useful features,
-but must not be presented as automatically satisfying this advanced criterion.
-Coverage here is limited and needs an explicit feature decision if targeting
-the higher rating bands. Do not claim 3/3 from the current evidence.
+Klean does not implement user classes, access controls, inheritance/polymorphic
+dispatch, or static/manual allocation syntax. No score is guaranteed; the
+implemented features should be evaluated for breadth and correctness.
 
 ## Basic Compilation Process (7 points)
 
@@ -68,24 +69,24 @@ compiled to bytecode before VM execution.
 
 ## Advanced Compilation Process (3 points)
 
-The official description assesses the number and complexity of additional
-processes, including semantic analysis, optimisation, concurrency/parallelism,
-and high-level processes such as closures/domain-specific optimisation.
-
-| Official area | Current evidence | Limitation |
+| Official area | Implemented evidence | Limitation |
 | --- | --- | --- |
-| Semantic: type checking | Operator/assignment/array/condition/call/return/const checks in semantic.py | No static definite-assignment or all-path-return analysis |
-| Semantic: mathematical errors | Compile-time literal range and operand-type checks; runtime overflow/divide-by-zero guards | Runtime guards are not static mathematical proof or compiler optimisation |
-| Semantic: order of instantiation | Declaration-before-use binding; function signatures collected first; runtime unavailable/uninitialised checks | Some failures are runtime rather than compile-time |
-| Optimisation | No general optimisation pass | No dead-code elimination, constant-folding pass, or loop unrolling |
-| Concurrency/parallelism | None | Single-threaded VM; no language threads |
-| Closures/domain-specific optimisation | None | Top-level first-order functions only; no captured lexical environments |
+| Semantic analysis | Scoped declarations, type/const/array/call/return checks; generic inference and parametric checking | No static definite-assignment or all-path-return analysis |
+| Mathematical errors | Literal ranges/operand types checked statically; checked runtime arithmetic | Runtime checks are not a static proof of arithmetic safety |
+| Instantiation order | Declaration-before-use resolution; signatures collected before bodies; runtime initialisation checks | Some initialisation failures are runtime |
+| Optimisation: constant folding | Valid pure scalar arithmetic/unary/comparison expressions folded after semantic checking | Faulting arithmetic and effectful operands preserved |
+| Optimisation: dead-code elimination | Constant-condition branch/false-loop removal; post-return unreachable statements removed while preserving scopes | No loop unrolling or general data-flow analysis |
+| Concurrency/closures/domain-specific optimisation | Not implemented | Single-threaded, first-order functions |
 
-Short-circuit jumps implement required evaluation semantics. They are not a
-general dead-code-elimination pass. Activation frames and parser recovery are
-engineering evidence but do not automatically establish the additional breadth
-listed in this criterion. Semantic analysis provides genuine coverage; a wide
-variety of advanced processes has not yet been demonstrated.
+`test_optimizer.py` compares enabled/disabled results, effects, faults/locations,
+scopes and instruction counts. All 24 sample cases also run with optimisation
+enabled and disabled. `--no-optimize`, `--bytecode` and
+`--optimization-report` expose the actual transformation for marker inspection.
+Short-circuit simplification is distinguished from the separate branch and
+unreachable-code passes.
+
+Semantic analysis and multiple optimisations now provide evidence in this
+criterion. The number and complexity of these processes remain a marking decision.
 
 ## Documentation & Ease of Use (5 points)
 
@@ -101,9 +102,9 @@ still depend on marker testing; existing test success is not a score guarantee.
 
 ## Remaining actions
 
-- Choose whether to add a substantial advanced language feature and additional
-  compiler processes before aiming for the top advanced rating bands. Changes
-  need corresponding semantics, tests, and documentation.
+- Review the implemented generics, managed allocation/GC and optimisation
+  examples against the expanded rubric; remaining unsupported features are
+  recorded explicitly rather than claimed as implemented.
 - Confirm exact deadline, upload location, archive name/format, and any required
   cover sheet or contribution statement.
 - Confirm current permitted-assistance requirements and declare actual work/

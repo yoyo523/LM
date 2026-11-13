@@ -14,8 +14,9 @@ comments to the end of the line are ignored. Identifiers match
 let const int bool if else while fn return print true false and or not
 ```
 
-`input()` is a built-in call. The name `input` can still be used for a variable
-(as in the original 2a example), but a user function cannot be named `input`.
+Built-in function names are `input`, `array`, `len`, and `collect`. These names
+can still be used for variables (as in the original `input` example), but user
+functions cannot redefine the built-ins.
 Strings, floating-point literals, multiline comments, and implicit conversions
 are not supported.
 
@@ -63,13 +64,14 @@ element type. The value to the left of `->` is evaluated before the destination
 index. Indices are `int` expressions and are zero-based. Negative indices and
 indices at or beyond the array length cause runtime errors.
 
-Array literals must be nonempty and contain only one element type. Empty and
-nested arrays are unsupported. Arrays can be passed to functions, returned,
+Array literals must be nonempty and contain only one element type. Empty
+literals and nested arrays are unsupported; `array(0, fill)` can produce a
+typed empty array at runtime. Arrays can be passed to functions, returned,
 printed, compared for equality, or assigned as whole values. Reading an array
 produces a copy; assignments and function arguments therefore do not introduce
 mutable aliases. Mutating a parameter does not mutate the caller's array. The
 constant array itself remains immutable even when a mutable copy is changed.
-There are no append, slice, or length built-ins. A whole-array assignment may
+There are no append or slice operations. `len(a)` reports an array's length. A whole-array assignment may
 replace an array with a different-length array of the same element type.
 
 ## Operators and evaluation
@@ -98,6 +100,16 @@ true, including skipping `input()` and function side effects. Division truncates
 towards zero, so `-7 / 3` is `-2`. Division by zero and arithmetic overflow cause
 runtime errors; integers do not wrap. Out-of-range literals are compile errors.
 The negative literal `-2147483648` is accepted.
+
+## Dynamic allocation and garbage collection
+
+`array(length, fill)` evaluates an int length and scalar int/bool fill once,
+left-to-right, and dynamically allocates a filled array. Negative lengths are
+runtime errors. `collect()` runs the VM-owned tracing collector and returns the
+number of reclaimed objects. Heap roots include globals, all active scopes and
+the operand stack; automatic collection runs before an allocation exceeds the
+configured slot budget. See [advanced features](advanced_features.md) for the
+algorithm, accounting and `--heap-stats` inspection.
 
 ## Statements and control flow
 
@@ -146,6 +158,20 @@ statements execute in source order, so even a statically visible global must
 have been created and initialised when a call actually reads it. Unavailable or
 uninitialised globals cause runtime errors.
 
+## Generic functions
+
+Functions may declare type parameters: `fn identity<T>(value: T) -> T`.
+Each type parameter must appear in a parameter type. Calls infer scalar int/bool
+type arguments; `T[]` denotes an array of the inferred scalar. Multiple type
+parameters and recursive generic calls are supported. The body is checked with
+symbolic types and compiled to one type-erased bytecode body.
+
+A symbolic `T` allows assignment, equality, printing and returning values;
+arithmetic or a Boolean condition requires a concrete corresponding type.
+Inconsistent inference is rejected. Explicit type arguments at calls, constraints
+and nested arrays are not supported. Examples and details are in
+[advanced features](advanced_features.md).
+
 ## Input and output
 
 ```klean
@@ -173,8 +199,12 @@ or inspection, exit 1 means file/compilation failure, and exit 2 means runtime
 failure or invalid command-line arguments. Output printed before a runtime
 failure is retained. See [examples](../examples/README.md) for failure cases.
 
-The default VM limits are 1,000,000 instructions and 1,000 active function calls.
-`--max-steps` and `--max-frames` accept positive integers. Excessive compiler
+The default VM limits are 1,000,000 instructions, 1,000 active function calls,
+and 1,000,000 heap slots (elements plus array headers). `--max-steps`,
+`--max-frames` and `--max-heap-slots` accept positive integers. Excessive compiler
 nesting produces a diagnostic. There are no total memory, source-size, or
 wall-clock limits, and waiting for `input()` is not bounded by the instruction
-budget. Static definite-assignment analysis and optimisation are not implemented.
+budget. Static definite-assignment analysis is not implemented. Constant folding and
+dead-code removal run after semantic checking; `--no-optimize` disables them.
+Faulting arithmetic and observable side effects are preserved. See
+[advanced features](advanced_features.md) for the transformation rules.

@@ -19,6 +19,7 @@ class Parser:
         self.tokens = tokens
         self.position = 0
         self.diagnostics: list[Diagnostic] = []
+        self.type_parameters: set[str] = set()
 
     @property
     def current(self) -> Token:
@@ -109,9 +110,10 @@ class Parser:
             self.take()
 
     def type_name(self) -> str:
-        if self.current.kind not in {'int', 'bool'}:
+        if self.current.kind not in {'int', 'bool'} and not (
+                self.current.kind == 'ID' and self.current.text in self.type_parameters):
             self.fail('Expected type int or bool')
-        name = self.take().kind
+        name = self.take().text
         if self.accept('['):
             self.expect(']')
             name += '[]'
@@ -126,6 +128,20 @@ class Parser:
     def function(self) -> Node:
         token = self.expect('fn')
         name = self.expect('ID')
+        type_parameters = []
+        if self.accept('<'):
+            type_parameters.append(self.expect('ID').text)
+            while self.accept(','):
+                type_parameters.append(self.expect('ID').text)
+            self.expect('>')
+        previous_types = self.type_parameters
+        self.type_parameters = set(type_parameters)
+        try:
+            return self.function_body(token, name, type_parameters)
+        finally:
+            self.type_parameters = previous_types
+
+    def function_body(self, token: Token, name: Token, type_parameters: list[str]) -> Node:
         self.expect('(')
         params = []
         if self.current.kind != ')':
@@ -139,7 +155,7 @@ class Parser:
         self.expect('->')
         return_type = self.type_name()
         return self.node('Function', token, name=name.text, name_token=name, parameters=params,
-                         return_type=return_type, body=self.block())
+                         return_type=return_type, body=self.block(), type_parameters=type_parameters)
 
     def statement(self) -> Node:
         token = self.current

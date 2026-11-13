@@ -86,6 +86,20 @@ Klean execution and local tests.
 Performance values are observations, not pass/fail thresholds. See
 [`validation.md`](validation.md) for the recorded macOS and Linux results.
 
+## Generic, memory and optimisation evidence
+
+| Area | Tests | Expected result |
+| --- | --- | --- |
+| Generic functions | `test_generics.py` | int/bool inference, generic arrays/recursion and copying; inconsistent or invalid types rejected |
+| Dynamic allocation | `test_heap.py`, heap-limit sample | Runtime lengths and zero-sized arrays work; negative/oversized requests fail cleanly |
+| Managed GC | Heap root, cycle, transient-root and pressure tests | Live stack/global/frame/scope roots survive; unreachable objects reclaimed |
+| Heap accounting | Heap budget tests, `--heap-stats` CLI tests | Headers/elements counted; peak bounded; existing stdout unchanged |
+| Constant folding | `test_optimizer.py` | Same results with fewer bytecode instructions; faulting operations retained |
+| Dead-code removal | Branch/loop/post-return tests | Unreachable code removed; scope and side effects preserved |
+| Optimisation safety | Differential error/side-effect tests | Same semantic diagnostics and runtime fault messages/locations |
+| Public inspection | `test_advanced_cli.py` | Bytecode/report, generic AST, heap stats and invalid limits work |
+| Full sample comparison | `test_samples.py` | All 24 cases pass with optimisation enabled and disabled |
+
 ## Optional quality tools
 
 Native-code ASan, UBSan and LeakSanitizer do not apply to this pure-Python

@@ -1,0 +1,9 @@
+// Expected stdout: 7, [false, false], true
+fn first<T>(items: T[]) -> T { return items[0]; }
+fn filled<T>(count: int, value: T) -> T[] { return array(count, value); }
+fn choose<T>(flag: bool, left: T, right: T) -> T {
+    if (flag) { return left; } else { return right; }
+}
+print(first(filled(3, 7)));
+print(filled(2, false));
+print(choose(true, true, false));

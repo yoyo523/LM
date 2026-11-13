@@ -1,21 +1,21 @@
 # Klean Compiler and Virtual Machine
 
 Klean is a statically typed teaching language with integers, booleans, typed
-one-dimensional arrays, constants, integer input, recursive functions, and
-pipeline assignment. It implements the Assignment 2a design with the extensions
+one-dimensional arrays, constants, integer input, generic/recursive functions,
+a managed array heap, garbage collection, and pipeline assignment. It implements
+the Assignment 2a design with the extensions
 recorded in [design changes](docs/design_changes.md):
 
-`source -> lexer -> parser/AST -> semantic analysis -> bytecode -> virtual machine`
+`source -> lexer -> parser/AST -> semantic analysis -> optimisation -> bytecode -> virtual machine`
 
 The project uses only the Python standard library and supports Python 3.10 or
 newer.
 
 ## Quick start
 
-1. Install Python 3.10 or newer and check `python3 --version`.
-2. Clone or download this repository and enter the extracted project directory.
-3. No pip packages or compilation step are required; all dependencies are in
-   the Python standard library.
+1. Require Python 3.10 or newer.
+2. Clone or download this repository and enter its root directory.
+3. No pip packages or compilation step are required.
 4. Run the example:
 
 ```bash
@@ -52,7 +52,7 @@ python3 -m klean examples/report_examples.kln --max-steps 2000000 --max-frames 2
 Exceeding a limit reports a runtime error. Already printed output is retained.
 Deep source/AST nesting is rejected with a compilation diagnostic; the exact
 threshold depends on the Python interpreter. These limits are not a security
-sandbox and do not bound source-file size or total memory.
+sandbox and do not bound source-file size, total process memory, or input waiting.
 
 ## Run the tests
 
@@ -179,15 +179,58 @@ Expected output is `14`. Run `examples/arrays_constants.kln` for arrays and
 constants. The normal test command checks all expectations in
 `examples/manifest.json`, including stdin and error exit codes.
 
+## Advanced features
+
+Generic functions infer scalar type parameters and support typed array arguments
+and results:
+
+```klean
+fn filled<T>(n: int, value: T) -> T[] { return array(n, value); }
+print(filled(3, 7));
+print(filled(2, false));
+```
+
+Expected output is `[7, 7, 7]` then `[false, false]`. Generic bodies are checked
+parametrically; a `T` does not imply arithmetic or Boolean-condition support.
+
+`array(length, fill)` dynamically allocates an array, `len(a)` gives its length,
+and `collect()` runs Klean's VM-owned mark-and-sweep collector. Arrays retain
+copy/value semantics. The heap traces operand/global/call/block roots and
+automatically collects before a capacity failure. Each array header and element
+uses one logical slot; the default budget is 1,000,000 slots:
+
+```sh
+printf '3\n' | python3 -m klean examples/memory.kln --max-heap-slots 100 --heap-stats
+```
+
+Normal stdout is preserved; `--heap-stats` adds JSON statistics to stderr after
+successful execution. Capacity errors use runtime exit status 2.
+
+Constant folding and dead-code removal are enabled after semantic checking.
+Compare the actual generated instructions with:
+
+```sh
+python3 -m klean examples/optimization.kln --bytecode --no-run
+python3 -m klean examples/optimization.kln --bytecode --no-run --no-optimize
+python3 -m klean examples/optimization.kln --optimization-report --no-run
+```
+
+Both execution modes print `20` then `7`; optimised bytecode is smaller.
+`--ast` displays the original source AST. See
+[advanced features](docs/advanced_features.md) for syntax, inference restrictions,
+heap accounting, GC roots, optimisation safety and corresponding tests.
+
 ## Project structure
 
 - `klean/lexer_adapter.py`: token recognition and source positions
 - `klean/parser.py`: LL(1) recursive-descent parser with panic recovery
 - `klean/ast.py`: tokens, diagnostics, and generic AST nodes
 - `klean/semantic.py`: scoped symbol tables and static type checking
+- `klean/optimizer.py`: scalar constant folding and scope-preserving dead-code removal
 - `klean/codegen.py`: AST-to-stack-bytecode translation
 - `klean/bytecode.py`: bytecode program representation and formatter
 - `klean/vm.py`: checked 32-bit stack virtual machine
+- `klean/heap.py`: managed arrays, root tracing, allocation budget and garbage collector
 - `klean/compiler.py`: complete compiler pipeline API
 - `klean/__main__.py`: command-line interface
 - `examples/`: runnable Klean programs
@@ -199,7 +242,7 @@ constants. The normal test command checks all expectations in
 ## Implementation notes
 
 The compiler collects lexical and syntax diagnostics before semantic analysis.
-Code generation only starts after the source passes all checks. The VM uses a
+Optimisation and code generation only start after the source passes all checks. The VM uses a
 stack for expression values and a separate activation frame for every function
 call. Each frame holds nested lexical scopes; functions may also read top-level
 variables that are declared before the function. Bytecode jumps implement
@@ -210,5 +253,6 @@ closing braces, and statement starts so a single run can report multiple errors.
 
 Uninitialised reads and missing function returns are checked at runtime;
 there is no static definite-assignment or all-path return analysis. Arrays are
-one-dimensional and nonempty; no slicing, append, or length built-in is provided.
+one-dimensional; literals are nonempty, while `array(0, fill)` produces an empty
+array. No slicing or append operation is provided; `len()` reports the length.
 Input is integer-only. Waiting for input is not bounded by VM instruction limits.

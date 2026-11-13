@@ -6,6 +6,7 @@ import re
 from typing import Callable, cast
 
 from .bytecode import BytecodeProgram, FunctionCode, Instruction
+from .heap import HeapError, HeapRef, ManagedHeap
 from .semantic import INT_MAX, INT_MIN
 
 
@@ -32,6 +33,7 @@ class Frame:
 class VirtualMachine:
     def __init__(self, program: BytecodeProgram, output: Callable[[str], None] = print,
                  *, max_steps: int = 1_000_000, max_frames: int = 1_000,
+                 max_heap_slots: int = 1_000_000,
                  input_reader: Callable[[], str] = input):
         if max_steps <= 0 or max_frames <= 0:
             raise ValueError("Execution limits must be positive")
@@ -44,6 +46,14 @@ class VirtualMachine:
         self.stack: list[object] = []
         self.global_scope: dict[str, object] = {}
         self.frames: list[Frame] = [Frame("<main>", program.main, 0, [self.global_scope])]
+        self.heap = ManagedHeap(self._roots, max_heap_slots)
+
+    def _roots(self):
+        yield from self.stack
+        yield from self.global_scope.values()
+        for frame in self.frames:
+            for scope in frame.scopes:
+                yield from scope.values()
 
     @property
     def frame(self) -> Frame:
@@ -59,7 +69,10 @@ class VirtualMachine:
                 raise KleanRuntimeError("Instruction limit exceeded", instruction)
             self.steps += 1
             frame.ip += 1
-            self._execute(instruction)
+            try:
+                self._execute(instruction)
+            except HeapError as error:
+                raise KleanRuntimeError(str(error), instruction) from None
 
     def _pop(self, instruction: Instruction) -> object:
         if not self.stack:
@@ -79,14 +92,15 @@ class VirtualMachine:
             return self.global_scope
         raise KleanRuntimeError(f"Variable {name!r} is not available", instruction)
 
-    def _array(self, value: object, index: object, ins: Instruction) -> list:
+    def _array(self, value: object, index: object, ins: Instruction) -> list[object]:
         if value is UNINITIALISED:
             raise KleanRuntimeError("Array is uninitialised", ins)
-        if not isinstance(value, list) or type(index) is not int:
+        if not isinstance(value, HeapRef) or type(index) is not int:
             raise KleanRuntimeError("Array access requires an array and int index", ins)
-        if index < 0 or index >= len(value):
+        values = self.heap.get(value)
+        if index < 0 or index >= len(values):
             raise KleanRuntimeError("Array index out of bounds", ins)
-        return value
+        return values
 
     def _input_int(self, ins: Instruction) -> int:
         try:
@@ -106,8 +120,8 @@ class VirtualMachine:
         return number
 
     def _format_value(self, value: object) -> str:
-        if isinstance(value, list):
-            return "[" + ", ".join(self._format_value(item) for item in value) + "]"
+        if isinstance(value, HeapRef):
+            return "[" + ", ".join(self._format_value(item) for item in self.heap.get(value)) + "]"
         return str(value).lower() if type(value) is bool else str(value)
 
     def _execute(self, ins: Instruction) -> None:
@@ -128,13 +142,24 @@ class VirtualMachine:
             if value is UNINITIALISED:
                 raise KleanRuntimeError(f"Variable {ins.argument!r} is uninitialised", ins)
             # Arrays have value semantics: reads do not create mutable aliases.
-            self.stack.append(value.copy() if isinstance(value, list) else value)
+            self.stack.append(self.heap.allocate(self.heap.get(value)) if isinstance(value, HeapRef) else value)
         elif op == "STORE":
             self._lookup_scope(ins.argument, ins)[ins.argument] = self._pop(ins)
         elif op == "INPUT":
             self.stack.append(self._input_int(ins))
         elif op == "BUILD_ARRAY":
-            self.stack.append([self._pop(ins) for _ in range(ins.argument)][::-1])
+            values = [self._pop(ins) for _ in range(ins.argument)][::-1]
+            self.stack.append(self.heap.allocate(values))
+        elif op == "NEW_ARRAY":
+            fill, length = self._pop(ins), cast(int, self._pop(ins))
+            self.stack.append(self.heap.allocate_filled(length, fill))
+        elif op == "ARRAY_LEN":
+            reference = self._pop(ins)
+            if not isinstance(reference, HeapRef):
+                raise KleanRuntimeError("len requires an array", ins)
+            self.stack.append(len(self.heap.get(reference)))
+        elif op == "COLLECT":
+            self.stack.append(self.heap.collect())
         elif op == "LOAD_INDEX":
             index = self._pop(ins)
             array = self._array(self._pop(ins), index, ins)
@@ -175,6 +200,10 @@ class VirtualMachine:
         elif op in {"EQ", "NE", "LT", "LE", "GT", "GE"}:
             comparison_right = self._pop(ins)
             comparison_left = self._pop(ins)
+            if isinstance(comparison_left, HeapRef):
+                comparison_left = self.heap.get(comparison_left)
+            if isinstance(comparison_right, HeapRef):
+                comparison_right = self.heap.get(comparison_right)
             if op == "EQ":
                 comparison = comparison_left == comparison_right
             elif op == "NE":
@@ -230,6 +259,7 @@ class VirtualMachine:
 
 def execute(program: BytecodeProgram, output: Callable[[str], None] = print,
             *, max_steps: int = 1_000_000, max_frames: int = 1_000,
+            max_heap_slots: int = 1_000_000,
             input_reader: Callable[[], str] = input) -> None:
     VirtualMachine(program, output, max_steps=max_steps, max_frames=max_frames,
-                   input_reader=input_reader).run()
+                   input_reader=input_reader, max_heap_slots=max_heap_slots).run()

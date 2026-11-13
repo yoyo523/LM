@@ -1,4 +1,4 @@
-"""Klean syntax front end."""
+"""Public Klean compiler and virtual-machine API."""
 from .ast import Diagnostic, Node, ParseResult, Token
 from .bytecode import BytecodeProgram, FunctionCode, Instruction
 from .compiler import CompilationResult, compile_source
@@ -12,5 +12,3 @@ __all__ = [
     "SemanticAnalyzer", "Token", "VirtualMachine", "analyse",
     "compile_source", "execute",
 ]
-
-__all__ = ['Diagnostic', 'Node', 'ParseResult', 'Token', 'Parser']

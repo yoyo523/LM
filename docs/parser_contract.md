@@ -28,6 +28,8 @@ columns count Python string characters, not display widths or UTF-8 bytes.
 The production lexer and manually constructed external token streams are checked
 in `tests/test_parser_contract.py`. `input` is an ID token: the parser recognizes
 the built-in only in the call form `input()`, preserving older variable names.
+The other built-ins (`array`, `len`, `collect`) use ordinary Call nodes and are
+validated/resolved by semantic analysis. Generic `<`/`>` use existing tokens.
 
 ## AST interface
 
@@ -70,10 +72,11 @@ denote optional syntax.
 
 ```ebnf
 program    = { function | statement }, EOF ;
-function   = "fn", ID, "(", [ parameter, { ",", parameter } ], ")",
+function   = "fn", ID, [ "<", ID, { ",", ID }, ">" ],
+             "(", [ parameter, { ",", parameter } ], ")",
              "->", type, block ;
 parameter  = ID, ":", type ;
-type       = ( "int" | "bool" ), [ "[", "]" ] ;
+type       = ( "int" | "bool" | ID ), [ "[", "]" ] ;
 block      = "{", { statement }, "}" ;
 statement  = "let", ID, ":", type, [ "=", expression ], ";"
            | "const", ID, ":", type, "=", expression, ";"
@@ -108,6 +111,14 @@ creates an Input node. ConstDecl has the same fields as VarDecl; AssignIndex
 adds `index` to Assign's fields. Array has `elements`; Index has `array` and
 `index`; Input has no fields. Nested/heterogeneous arrays are rejected by
 semantic analysis. Array indexing is the highest-precedence postfix operation.
+Type IDs must be among the current function's declared type parameters.
+Function adds `type_parameters` (a list of names). Generic calls infer concrete
+types and remain Call nodes. See advanced_features.md for their type rules.
+
+The source AST is not modified by optimisation. CompilationResult exposes a
+separate `optimized_ast`; its internal ScopedBlock node has `body` and preserves
+selected-branch scope. Constant folding and removals happen only after semantic
+checking. `--ast` continues to show the source AST.
 
 ## Review checklist
 

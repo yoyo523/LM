@@ -1,0 +1,2 @@
+// Rejected by the default heap budget before allocating the backing list.
+print(array(2147483647, 0));

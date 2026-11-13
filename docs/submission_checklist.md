@@ -21,6 +21,9 @@ evidence separately from official submission details that still need confirmatio
   feedback: arrays, constants, input, test expectations and corrected syntax.
 - [x] Array typing, constant writes and input errors have positive and negative
   regression coverage.
+- [x] Generic inference/errors, live heap roots/reclamation/limits, and
+  optimisation equivalence/side effects/errors are covered by dedicated tests.
+- [x] All sample expectations are checked both with and without optimisation.
 - [x] Linux Python 3.10 container verification and reproducible benchmark command.
 - [x] Private home-directory paths removed from submitted documentation.
 - [x] Earlier test counts/measurements separated into historical validation.
@@ -33,21 +36,22 @@ evidence separately from official submission details that still need confirmatio
 | Criterion | Points | Evidence |
 | --- | ---: | --- |
 | Basic Functionality | 7 | Typed variables/constants/arrays, integer input, expressions, branches/loops; execution, semantic and extension tests |
-| Advanced Functionality | 3 | Limited coverage: no Klean objects, encapsulation, polymorphism, generics, explicit memory-management model or VM-owned GC; host Python allocation alone does not establish this criterion |
+| Advanced Functionality | 3 | Parametric generics; VM-managed dynamic array allocation; explicit/automatic mark-and-sweep GC and memory accounting; dedicated tests/examples |
 | Basic Compilation Process | 7 | Tokenisation, parser/AST, semantic checks, code generation and VM; inspection commands and independent sample tests |
-| Advanced Compilation Process | 3 | Semantic type/name/const checks are implemented; no optimisation pass, concurrency, closures or domain-specific optimisation |
+| Advanced Compilation Process | 3 | Scoped semantic/generic checking, constant folding, constant-branch/false-loop removal and post-return dead-code elimination; differential tests and inspection options |
 | Documentation & Ease of Use | 5 | README, language reference, examples with expected results, QA matrix and clean-release instructions |
 
 All five expanded rubric descriptions have now been supplied and reviewed.
-Basic and documentation coverage have executable evidence; the two advanced
-criteria still have gaps. This is not a score prediction. See
+Basic and documentation coverage have executable evidence; advanced generics,
+managed allocation/GC and optimisation now have corresponding tests. Unsupported
+OOP, concurrency and closures remain explicit limitations. This is not a score prediction. See
 [requirements](requirements.md) for the detailed match and limitations.
 
 ## User confirmation before final upload
 
 - [x] Review all five expanded rubric descriptions against the implementation.
-- [ ] Decide whether to add advanced language features and compiler processes;
-  record remaining gaps explicitly if submitting the current feature set.
+- [x] Implement and test generics, managed dynamic allocation/GC, constant
+  folding and dead-code removal against the advanced criterion examples.
 - [ ] Confirm the exact deadline, upload location, archive naming/format, and
   any required cover sheet or contribution statement.
 - [ ] Confirm current permitted-assistance rules and provide any required

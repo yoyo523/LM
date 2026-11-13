@@ -82,6 +82,9 @@ class CodeGenerator:
 
     def _statement(self, node: Node) -> None:
         kind = node.kind
+        if kind == "ScopedBlock":
+            self._block(node.fields["body"])
+            return
         if kind in {"VarDecl", "ConstDecl"}:
             initializer = node.fields["initializer"]
             if initializer is None:
@@ -159,6 +162,10 @@ class CodeGenerator:
         if kind == "Call":
             for argument in node.fields["arguments"]:
                 self._expression(argument)
+            builtin_op = {"array": "NEW_ARRAY", "len": "ARRAY_LEN", "collect": "COLLECT"}.get(node.fields["name"])
+            if builtin_op is not None:
+                self._emit(builtin_op, node=node)
+                return
             self._emit("CALL", (node.fields["name"], len(node.fields["arguments"])), node)
             return
         if kind == "Unary":

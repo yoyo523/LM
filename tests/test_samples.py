@@ -11,11 +11,18 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class SampleTests(unittest.TestCase):
     def test_all_documented_samples(self):
+        self.check_cases()
+
+    def test_all_samples_without_optimization(self):
+        self.check_cases(plain=True)
+
+    def check_cases(self, plain=False):
         cases = json.loads((ROOT / 'examples/manifest.json').read_text(encoding='utf-8'))
         for case in cases:
-            with self.subTest(file=case['file'], stdin=case.get('stdin', '')):
+            with self.subTest(file=case['file'], stdin=case.get('stdin', ''), plain=plain):
                 result = subprocess.run(
-                    [sys.executable, '-m', 'klean', str(ROOT / 'examples' / case['file'])],
+                    [sys.executable, '-m', 'klean', str(ROOT / 'examples' / case['file']),
+                     *case.get('options', []), *(['--no-optimize'] if plain else [])],
                     input=case.get('stdin', ''), text=True, capture_output=True,
                     cwd=ROOT, timeout=10,
                 )

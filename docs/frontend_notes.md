@@ -1,9 +1,6 @@
 # Klean syntax frontend notes
 
-This AI-assisted implementation reflects the Assignment 2a design and the
-documented 2b extensions in [design changes](design_changes.md). The formal
-EBNF in the local `Assignment 2a.pdf`, pages 3–4, was reviewed on 2026-11-13;
-see frontend_review.md for scope and remaining ambiguities.
+This implementation reflects the Assignment 2a design and the documented 2b extensions in [design changes](design_changes.md). The formal EBNF in the local `Assignment 2a.pdf`, pages 3–4, see frontend_review.md for scope and remaining ambiguities.
 It is not evidence of independently authored student work.
 The repository records course restrictions on AI-generated assignment
 content; check permitted use before including this implementation in assessed work.
@@ -39,7 +36,7 @@ on `kind`. JSON serialization uses `dataclasses.asdict`.
 | --- | --- |
 | Program | items |
 | Block | statements |
-| Function | name, name_token, parameters, return_type, body |
+| Function | name, name_token, type_parameters, parameters, return_type, body |
 | Parameter | name, type |
 | VarDecl | name, name_token, type, initializer (node or None) |
 | ConstDecl | name, name_token, type, initializer (required node) |
@@ -88,6 +85,10 @@ The VM implements checked arithmetic, recursion and activation records; bytecode
 jumps implement short-circuit evaluation. Uninitialised reads and functions
 that finish without returning are runtime errors. Constants cannot be modified;
 array accesses check runtime bounds, and input is checked as signed int32.
+The semantic stage also checks parametric generic bodies and infers call types.
+The separate optimiser performs conservative constant folding and dead-code
+removal. The VM uses a managed array heap with mark-and-sweep GC and slot limits.
+See [advanced features](advanced_features.md) for their contracts and tests.
 
 ## Verification and limitations
 
