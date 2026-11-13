@@ -57,7 +57,8 @@ class ParserTests(unittest.TestCase):
     def test_bad_syntax(self):
         for source in ['print(1 < 2 < 3);', '1 -> 2;', 'If (true) {}',
                        'while (true) print(1);', 'let x: float;',
-                       'print(f(1,));', 'print(1)', 'if (true) {',
+                       'print(f(1,));', 'print(1)', 'print((1);', 'print 1);',
+                       'if (true) {',
                        'if (true) { fn f() -> int { return 1; } }']:
             with self.subTest(source=source):
                 self.assertTrue(parse(source)[1])

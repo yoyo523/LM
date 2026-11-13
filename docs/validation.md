@@ -1,5 +1,38 @@
 # Validation record
 
+## Member B QA completion (2026-11-13)
+
+The current root project contains **66 tests**. The full suite, bytecode
+compilation check, report example, benchmark, and Linux verification script all
+completed successfully after the final `if`/`else` end-to-end case and parser
+delimiter cases were integrated.
+
+Commands run from the repository root:
+
+```sh
+python3 -m unittest discover -s tests -v
+python3 -m compileall -q klean examples tests
+./scripts/verify_linux.sh
+```
+
+| Environment | Result |
+| --- | --- |
+| macOS 15.1 arm64, Python 3.12.4 | 66 tests passed in 0.746 seconds; `compileall` passed |
+| Linux Docker container, Python 3.10.22 | 66 tests passed in 1.725 seconds; report example printed `23`, `6`, `21` |
+
+The Linux command used the official `python:3.10-slim` image at digest
+`sha256:6ff506466f8b1e981719b468cc0023b8ef000b983cdec0eafe119d01f379e31d`.
+The source directory is mounted read-only and no packages are installed in the
+container. The observed container was Debian 13/glibc 2.41 on aarch64 Docker
+Linux; this is a reproducible Linux userspace test, not a claim of native
+hardware validation.
+
+The Linux benchmark reports median compile/execute milliseconds over five
+repetitions: 3,000 statements `33.790 / 3.489`; a 100-term expression
+`0.598 / 0.134`; and 10,000 loop iterations `0.113 / 73.073`. These are
+observations, not performance guarantees. See [the QA matrix](qa_matrix.md)
+for the case-to-test mapping.
+
 ## Frontend code-review follow-up (2026-11-13)
 
 The suite now contains **65 tests**, all passing locally on macOS/Python 3.9.6.
@@ -109,7 +142,8 @@ cross-platform comparison. CPU load, emulation and Python versions differ.
 - Confirm the group's policies: overflow raises a runtime error, division
   truncates towards zero, and uninitialised reads/missing returns are runtime
   errors. Static definite-assignment and all-path return analysis are absent.
-- Dedicated lint, type-check and coverage reports have not been produced.
-  Native-code Sanitizers are not applicable to this pure-Python codebase.
+- Dedicated lint, type-check and coverage reports have not been produced in the
+  final root checkout. Native-code Sanitizers are not applicable to this
+  pure-Python codebase.
 - Prepare the final submission archive only after checking the required contents
   and documenting contributions and permitted assistance accurately.

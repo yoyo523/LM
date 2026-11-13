@@ -205,18 +205,12 @@ class SemanticAnalyzer:
             operator = node.fields["operator"]
             left = self._expression(node.fields["left"])
             right = self._expression(node.fields["right"])
-            if operator in {"+", "-", "*", "/", "<", "<=", ">", ">="}:
-                expected = "int"
-            elif operator in {"and", "or"}:
-                expected = "bool"
-            else:
-                expected = None
-
             if operator in {"==", "!="}:
                 if left is not None and right is not None and left != right:
                     self.error(node, f"Operator {operator!r} requires operands of the same type")
                 return "bool"
 
+            expected = "bool" if operator in {"and", "or"} else "int"
             for side, actual in (("left", left), ("right", right)):
                 if actual is not None and actual != expected:
                     self.error(

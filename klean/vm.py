@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable
+from typing import Callable, cast
 
 from .bytecode import BytecodeProgram, FunctionCode, Instruction
 from .semantic import INT_MAX, INT_MIN
@@ -106,11 +106,12 @@ class VirtualMachine:
             value = self._pop(ins)
             self.output(str(value).lower() if type(value) is bool else str(value))
         elif op == "NEG":
-            self.stack.append(self._checked_int(-int(self._pop(ins)), ins))
+            self.stack.append(self._checked_int(-cast(int, self._pop(ins)), ins))
         elif op == "NOT":
             self.stack.append(not bool(self._pop(ins)))
         elif op in {"ADD", "SUB", "MUL", "DIV"}:
-            right, left = int(self._pop(ins)), int(self._pop(ins))
+            right = cast(int, self._pop(ins))
+            left = cast(int, self._pop(ins))
             if op == "ADD":
                 value = left + right
             elif op == "SUB":
@@ -125,16 +126,23 @@ class VirtualMachine:
                     value = -value
             self.stack.append(self._checked_int(value, ins))
         elif op in {"EQ", "NE", "LT", "LE", "GT", "GE"}:
-            right, left = self._pop(ins), self._pop(ins)
-            operations = {
-                "EQ": lambda: left == right,
-                "NE": lambda: left != right,
-                "LT": lambda: left < right,
-                "LE": lambda: left <= right,
-                "GT": lambda: left > right,
-                "GE": lambda: left >= right,
-            }
-            self.stack.append(operations[op]())
+            comparison_right = self._pop(ins)
+            comparison_left = self._pop(ins)
+            if op == "EQ":
+                comparison = comparison_left == comparison_right
+            elif op == "NE":
+                comparison = comparison_left != comparison_right
+            else:
+                ordered_left = cast(int, comparison_left)
+                ordered_right = cast(int, comparison_right)
+                operations = {
+                    "LT": lambda: ordered_left < ordered_right,
+                    "LE": lambda: ordered_left <= ordered_right,
+                    "GT": lambda: ordered_left > ordered_right,
+                    "GE": lambda: ordered_left >= ordered_right,
+                }
+                comparison = operations[op]()
+            self.stack.append(comparison)
         elif op == "JUMP":
             self.frame.ip = ins.argument
         elif op in {"JUMP_IF_FALSE", "JUMP_IF_TRUE"}:

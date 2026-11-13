@@ -33,19 +33,21 @@ def main() -> int:
 
     try:
         source = args.source.read_text(encoding="utf-8")
-    except (OSError, UnicodeError) as error:
-        print(f"{args.source}: {error}", file=sys.stderr)
+    except (OSError, UnicodeError) as read_error:
+        print(f"{args.source}: {read_error}", file=sys.stderr)
         return 1
 
     result = compile_source(source)
     if result.diagnostics:
-        for error in result.diagnostics:
+        for diagnostic in result.diagnostics:
             print(
-                f"{args.source}:{error.line}:{error.column}: {error.message}",
+                f"{args.source}:{diagnostic.line}:{diagnostic.column}: {diagnostic.message}",
                 file=sys.stderr,
             )
         return 1
 
+    # A diagnostic-free compilation always reaches bytecode generation.
+    assert result.bytecode is not None
     if args.tokens:
         for token in result.tokens:
             print(f"{token.line}:{token.column}\t{token.kind}\t{token.text!r}")

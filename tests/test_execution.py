@@ -32,6 +32,16 @@ class ExecutionTests(unittest.TestCase):
         """
         self.assertEqual(run(source), ["6"])
 
+    def test_if_else_and_function_call(self):
+        source = """
+        fn choose(value: int, keep: bool) -> int {
+            if (keep) { return value; } else { return 0 - value; }
+        }
+        print(choose(7, true));
+        print(choose(7, false));
+        """
+        self.assertEqual(run(source), ["7", "-7"])
+
     def test_recursion(self):
         source = """
         fn fib(n: int) -> int {
