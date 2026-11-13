@@ -33,19 +33,21 @@ evidence separately from official submission details that still need confirmatio
 | Criterion | Points | Evidence |
 | --- | ---: | --- |
 | Basic Functionality | 7 | Typed variables/constants/arrays, integer input, expressions, branches/loops; execution, semantic and extension tests |
-| Advanced Functionality | 3 | Recursive/mutually recursive functions, array parameters/results, lexical scope/shadowing, short-circuit behaviour |
+| Advanced Functionality | 3 | Limited coverage: no Klean objects, encapsulation, polymorphism, generics, explicit memory-management model or VM-owned GC; host Python allocation alone does not establish this criterion |
 | Basic Compilation Process | 7 | Tokenisation, parser/AST, semantic checks, code generation and VM; inspection commands and independent sample tests |
-| Advanced Compilation Process | 3 | Scoped type/const validation, jump generation, call frames, panic recovery; corresponding integration tests |
+| Advanced Compilation Process | 3 | Semantic type/name/const checks are implemented; no optimisation pass, concurrency, closures or domain-specific optimisation |
 | Documentation & Ease of Use | 5 | README, language reference, examples with expected results, QA matrix and clean-release instructions |
 
-This is an evidence map, not a score prediction. The expanded official rubric
-determines the required breadth of high-level functions/processes. See
-[requirements](requirements.md) for the source and remaining uncertainties.
+All five expanded rubric descriptions have now been supplied and reviewed.
+Basic and documentation coverage have executable evidence; the two advanced
+criteria still have gaps. This is not a score prediction. See
+[requirements](requirements.md) for the detailed match and limitations.
 
 ## User confirmation before final upload
 
-- [ ] Check the expandable Canvas rubric descriptions for any additional
-  mandatory language features or compilation processes.
+- [x] Review all five expanded rubric descriptions against the implementation.
+- [ ] Decide whether to add advanced language features and compiler processes;
+  record remaining gaps explicitly if submitting the current feature set.
 - [ ] Confirm the exact deadline, upload location, archive naming/format, and
   any required cover sheet or contribution statement.
 - [ ] Confirm current permitted-assistance rules and provide any required

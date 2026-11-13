@@ -51,6 +51,7 @@ rather than the former A/B/C task labels. If a contribution or planning statemen
 is requested at submission, record actual authorship, work, and assistance.
 
 The supplied 2b brief and 25-point rubric are tracked in
-[requirements and evidence](requirements.md). Their hidden Canvas descriptions,
-deadline, and final upload instructions still require confirmation. The 2a
+[requirements and evidence](requirements.md). All five expanded rubric descriptions have now been supplied and reviewed;
+the two advanced criteria still have implementation gaps. The deadline and
+final upload instructions still require confirmation. The 2a
 six-page PDF report limit must not be presented as a new 2b requirement.

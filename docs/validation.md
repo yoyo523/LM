@@ -56,5 +56,8 @@ file are not current totals.
 - Arrays are one-dimensional and nonempty. Input is integer-only.
 - Native-code sanitizers do not apply to pure Python. Earlier mypy results do not
   validate subsequent extensions; no new lint/type/coverage result is claimed.
-- Canvas expandable rubric, exact submission rules, and actual contribution/
-  assistance declarations still require user confirmation.
+- All five expanded rubric descriptions have been reviewed. Advanced language
+  features (OOP/generics/explicit memory management/GC) and additional compiler
+  processes (optimisation/concurrency/closures) remain absent; see requirements.md.
+- Exact submission rules and actual contribution/assistance declarations still
+  require user confirmation.
