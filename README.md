@@ -71,6 +71,8 @@ python3 -m examples.benchmark
 
 See [validation results](docs/validation.md) for environments, measurements and
 remaining checks. The runtime and tests need no third-party packages.
+See the [QA test matrix](docs/qa_matrix.md) for lexer/parser, semantic, runtime,
+end-to-end and stress cases with their expected results and activation status.
 See the [Parser/AST contract](docs/parser_contract.md) for the token interface,
 implemented grammar, identifier locations and Member A's integration checklist.
 Use the [submission checklist](docs/submission_checklist.md) and
